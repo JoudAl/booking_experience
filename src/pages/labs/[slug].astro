@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LabShell from '../../components/LabShell.astro';
+import { labs } from '../../data/labs';
+import type { Lab } from '../../data/labs';
+
+const demos = import.meta.glob<{ default: any }>('../../components/labs/*.astro', {
+  eager: true,
+});
+
+export function getStaticPaths() {
+  return labs.map((lab, index) => ({
+    params: { slug: lab.slug },
+    props: {
+      lab,
+      index,
+      prev: index > 0 ? labs[index - 1] : undefined,
+      next: index < labs.length - 1 ? labs[index + 1] : undefined,
+    },
+  }));
+}
+
+interface Props {
+  lab: Lab;
+  index: number;
+  prev?: Lab;
+  next?: Lab;
+}
+
+const { lab, index, prev, next } = Astro.props;
+
+const entry = Object.entries(demos).find(([path]) =>
+  path.endsWith(`/${lab.component}.astro`),
+);
+
+if (!entry) {
+  throw new Error(
+    `Lab "${lab.slug}" points at src/components/labs/${lab.component}.astro, which does not exist.`,
+  );
+}
+
+const Demo = entry[1].default;
+---
+
+<BaseLayout title={`${lab.title} · Booking Experience Lab`} description={lab.tagline}>
+  <LabShell lab={lab} index={index} total={labs.length} prev={prev} next={next}>
+    <Demo />
+  </LabShell>
+</BaseLayout>

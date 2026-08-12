@@ -1,0 +1,232 @@
+---
+// Lab: hostile appointment entry. Six dropdowns, ambiguous text format, destructive validation.
+const days = Array.from({ length: 31 }, (_, i) => i + 1);
+const months = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+const years = [2026, 2027];
+const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+const minutes = ['00', '15', '30', '45'];
+---
+
+<div class="dm">
+  <h3 class="dm__h">Request an appointment</h3>
+
+  <form class="dm__form" data-dm-form novalidate>
+    <fieldset class="dm__set">
+      <legend class="dm__legend">Preferred date</legend>
+      <div class="dm__selects">
+        <select class="input dm__sel" data-dm="d" aria-label="Day">
+          <option value="">DD</option>
+          {days.map((d) => <option value={d}>{d}</option>)}
+        </select>
+        <select class="input dm__sel" data-dm="m" aria-label="Month">
+          <option value="">MMM</option>
+          {months.map((m, i) => <option value={i + 1}>{m}</option>)}
+        </select>
+        <select class="input dm__sel" data-dm="y" aria-label="Year">
+          <option value="">YYYY</option>
+          {years.map((y) => <option value={y}>{y}</option>)}
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset class="dm__set">
+      <legend class="dm__legend">Preferred time</legend>
+      <div class="dm__selects">
+        <select class="input dm__sel" data-dm="h" aria-label="Hour">
+          <option value="">HH</option>
+          {hours.map((h) => <option value={h}>{h}</option>)}
+        </select>
+        <select class="input dm__sel" data-dm="min" aria-label="Minutes">
+          <option value="">MM</option>
+          {minutes.map((m) => <option value={m}>{m}</option>)}
+        </select>
+        <select class="input dm__sel" data-dm="ampm" aria-label="AM or PM">
+          <option value="">AM/PM</option>
+          <option value="am">AM</option>
+          <option value="pm">PM</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <label class="field">
+      <span class="label">Or type your preferred date</span>
+      <input class="input" type="text" data-dm="text" placeholder="03/05" />
+    </label>
+
+    <div class="dm__grid">
+      <label class="field">
+        <span class="label">Patient name</span>
+        <input class="input" type="text" data-dm="name" placeholder="Alex Moreno" />
+      </label>
+      <label class="field">
+        <span class="label">Email</span>
+        <input class="input" type="text" data-dm="email" placeholder="alex@example.com" />
+      </label>
+      <label class="field">
+        <span class="label">Service</span>
+        <select class="input" data-dm="service">
+          <option>Initial assessment</option>
+          <option>Follow-up</option>
+          <option>Rehab session</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="label">Referral code</span>
+        <input class="input" type="text" data-dm="promo" placeholder="Optional" />
+      </label>
+    </div>
+
+    <button class="btn btn--primary" type="submit">Request appointment</button>
+  </form>
+
+  <p class="dm__error" data-dm-error hidden role="alert"></p>
+  <p class="dm__ok" data-dm-ok hidden></p>
+
+  <div class="demo-note">
+    <span class="dm__attempts">Submit attempts: <strong data-dm-attempts>0</strong></span>
+    <button class="btn btn--sm" type="button" data-dm-reset>Reset the demo</button>
+  </div>
+</div>
+
+<style>
+  .dm__h {
+    margin-bottom: 1rem;
+  }
+  .dm__set {
+    border: none;
+    padding: 0;
+    margin: 0 0 0.85rem;
+  }
+  .dm__legend {
+    padding: 0;
+    font-size: 0.84rem;
+    font-weight: 580;
+    color: var(--text-muted);
+    margin-bottom: 0.28rem;
+  }
+  .dm__selects {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .dm__sel {
+    width: auto;
+    min-width: 78px;
+  }
+  .dm__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0 1rem;
+  }
+
+  .dm__error {
+    margin: 1rem 0 0;
+    padding: 0.7rem 0.9rem;
+    background: var(--bad-soft);
+    border: 1px solid var(--bad-border);
+    color: var(--bad);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+  }
+  .dm__ok {
+    margin: 1rem 0 0;
+    padding: 0.7rem 0.9rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+  }
+  .dm__attempts {
+    margin-right: 0.6rem;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.dm');
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-dm-form]')!;
+    const error = root.querySelector<HTMLElement>('[data-dm-error]')!;
+    const ok = root.querySelector<HTMLElement>('[data-dm-ok]')!;
+    const counter = root.querySelector<HTMLElement>('[data-dm-attempts]')!;
+    const get = (key: string) =>
+      root.querySelector<HTMLInputElement | HTMLSelectElement>(`[data-dm="${key}"]`)!;
+
+    // Days the clinic is closed, and hours it does not run — none of it shown in advance.
+    const closedDates = new Set(['4-3', '11-3', '18-3']);
+    let attempts = 0;
+
+    // Wipe every answer on failure — the part users actually hate.
+    const nuke = () => {
+      for (const el of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('.input')) {
+        el.value = '';
+      }
+    };
+
+    const fail = (message: string) => {
+      error.hidden = false;
+      error.textContent = message;
+      ok.hidden = true;
+      nuke();
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      attempts += 1;
+      counter.textContent = String(attempts);
+
+      const d = get('d').value;
+      const m = get('m').value;
+      const y = get('y').value;
+      const h = get('h').value;
+      const min = get('min').value;
+      const ampm = get('ampm').value;
+      const typed = get('text').value.trim();
+
+      if (typed && !d) {
+        fail(
+          'We could not read the date you typed. Was "03/05" the 3rd of May or the 5th of March? Please use the dropdowns instead. (Your other answers have been cleared.)',
+        );
+        return;
+      }
+
+      if (!d || !m || !y) {
+        fail('The date is incomplete. Please start again. (Your other answers have been cleared.)');
+        return;
+      }
+
+      if (!h || !min || !ampm) {
+        fail('The time is incomplete. Please start again. (Your other answers have been cleared.)');
+        return;
+      }
+
+      const hour24 = ampm === 'pm' ? (Number(h) % 12) + 12 : Number(h) % 12;
+
+      if (hour24 < 8 || hour24 >= 18) {
+        fail('We are only open 8am to 6pm. Please choose another time. (Your other answers have been cleared.)');
+        return;
+      }
+
+      if (closedDates.has(`${d}-${m}`)) {
+        fail('Sorry, the clinic is closed that day. Please try another date. (Your other answers have been cleared.)');
+        return;
+      }
+
+      const label = `${d}/${m}/${y} at ${h}:${min}${ampm}`;
+      error.hidden = true;
+      ok.hidden = false;
+      ok.textContent = `Request submitted for ${label}. Note this is only a request — we will confirm by email within 2 working days. It took you ${attempts} submit${
+        attempts === 1 ? '' : 's'
+      } and at least ${6 + attempts} interactions, and you still do not have an appointment.`;
+    });
+
+    root.querySelector('[data-dm-reset]')?.addEventListener('click', () => {
+      nuke();
+      attempts = 0;
+      counter.textContent = '0';
+      error.hidden = true;
+      ok.hidden = true;
+    });
+  }
+</script>

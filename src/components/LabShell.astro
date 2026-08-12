@@ -1,0 +1,429 @@
+---
+import type { Lab } from '../data/labs';
+
+interface Props {
+  lab: Lab;
+  index: number;
+  total: number;
+  prev?: Lab;
+  next?: Lab;
+}
+
+const { lab, index, total, prev, next } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const labHref = (slug: string) => `${base}/labs/${slug}`;
+---
+
+<div class="page">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href={`${base}/`}>All labs</a>
+    <span aria-hidden="true">/</span>
+    <span>Lab {index + 1} of {total}</span>
+  </nav>
+
+  <header class="lab-head">
+    <p class="eyebrow">Lab {String(index + 1).padStart(2, '0')}</p>
+    <h1>{lab.title}</h1>
+    <p class="lede">{lab.tagline}</p>
+  </header>
+
+  <section class="task" aria-labelledby="task-h">
+    <h2 id="task-h" class="task__h">Your task</h2>
+    <p class="task__p">{lab.task}</p>
+  </section>
+
+  <section aria-label="Interactive demo">
+    <div class="demo-chrome">
+      <div class="demo-chrome__bar">
+        <span class="demo-chrome__dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="demo-chrome__url">https://www.example-appointments.test/{lab.slug}</span>
+        <span class="demo-chrome__sim">simulation</span>
+      </div>
+      <div class="demo-body">
+        <slot />
+      </div>
+    </div>
+  </section>
+
+  <section class="judge" data-judge data-slug={lab.slug} data-verdict={lab.verdict} aria-labelledby="judge-h">
+    <div data-judge-ask>
+      <h2 id="judge-h">So — was that good or bad?</h2>
+      <p class="judge__p">
+        Commit to an answer before you read on. Guessing and being wrong is how this sticks.
+      </p>
+      <div class="judge__actions">
+        <button class="btn judge__btn judge__btn--good" type="button" data-answer="good">
+          Good experience
+        </button>
+        <button class="btn judge__btn judge__btn--bad" type="button" data-answer="bad">
+          Bad experience
+        </button>
+      </div>
+      <p class="hint">Your answer is remembered in this browser so the home page can track progress.</p>
+    </div>
+
+    <p class="judge__scored" data-judge-scored hidden></p>
+  </section>
+
+  <section class="reveal" data-reveal hidden aria-labelledby="reveal-h" tabindex="-1">
+    <div class={`reveal__banner reveal__banner--${lab.verdict}`}>
+      <span class="reveal__verdict">{lab.verdict === 'bad' ? 'Bad experience' : 'Good experience'}</span>
+      <span class="reveal__pattern">{lab.pattern}</span>
+    </div>
+
+    <div class="reveal__body">
+      <div class="reveal__main prose">
+        <h2 id="reveal-h">What just happened to you</h2>
+        <ul class="ticks">
+          {lab.whatHappened.map((item) => <li>{item}</li>)}
+        </ul>
+
+        <h3>Why it works, and what it costs</h3>
+        <p>{lab.why}</p>
+
+        {lab.context && (
+          <p class="context">
+            <strong>Worth knowing:</strong> {lab.context}
+          </p>
+        )}
+      </div>
+
+      <aside class="reveal__side">
+        <div class="panel">
+          <h3 class="panel__h">How to spot it in the wild</h3>
+          <ul class="bullets">
+            {lab.spot.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+        <div class="panel panel--fix">
+          <h3 class="panel__h">
+            {lab.verdict === 'bad' ? 'How to build it properly' : 'How to keep it that way'}
+          </h3>
+          <ul class="bullets">
+            {lab.fix.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <nav class="lab-nav" aria-label="Lab navigation">
+    {prev ? (
+      <a class="lab-nav__link" href={labHref(prev.slug)}>
+        <span class="lab-nav__dir">← Previous</span>
+        <span class="lab-nav__title">{prev.title}</span>
+      </a>
+    ) : (
+      <span></span>
+    )}
+    {next ? (
+      <a class="lab-nav__link lab-nav__link--next" href={labHref(next.slug)}>
+        <span class="lab-nav__dir">Next →</span>
+        <span class="lab-nav__title">{next.title}</span>
+      </a>
+    ) : (
+      <a class="lab-nav__link lab-nav__link--next" href={`${base}/cheatsheet`}>
+        <span class="lab-nav__dir">Finish →</span>
+        <span class="lab-nav__title">The cheat sheet</span>
+      </a>
+    )}
+  </nav>
+</div>
+
+<style>
+  .crumbs {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-faint);
+    margin-bottom: 1.5rem;
+  }
+  .crumbs a {
+    color: var(--text-muted);
+  }
+
+  .lab-head {
+    max-width: var(--measure);
+    margin-bottom: 1.75rem;
+  }
+
+  .task {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.25rem;
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: var(--radius);
+  }
+  .task__h {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--accent) 70%, var(--text));
+    white-space: nowrap;
+  }
+  .task__p {
+    margin: 0;
+    flex: 1 1 22ch;
+    font-size: 0.95rem;
+  }
+
+  .demo-chrome__sim {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.05rem 0.45rem;
+  }
+
+  .judge {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    text-align: center;
+  }
+  .judge h2 {
+    margin-bottom: 0.35rem;
+  }
+  .judge__p {
+    color: var(--text-muted);
+    max-width: 46ch;
+    margin-inline: auto;
+    font-size: 0.95rem;
+  }
+  .judge__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 1.1rem 0 0.6rem;
+  }
+  .judge__btn {
+    padding: 0.7rem 1.4rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .judge__btn--good {
+    border-color: var(--good-border);
+    color: var(--good);
+    background: var(--good-soft);
+  }
+  .judge__btn--bad {
+    border-color: var(--bad-border);
+    color: var(--bad);
+    background: var(--bad-soft);
+  }
+  .judge__scored {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 560;
+  }
+
+  .reveal {
+    margin-top: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .reveal__banner {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .reveal__banner--bad {
+    background: var(--bad-soft);
+    color: var(--bad);
+  }
+  .reveal__banner--good {
+    background: var(--good-soft);
+    color: var(--good);
+  }
+  .reveal__verdict {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-size: 1.05rem;
+  }
+  .reveal__pattern {
+    font-size: 0.88rem;
+    opacity: 0.85;
+  }
+
+  .reveal__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 2rem;
+    padding: 1.5rem;
+  }
+  @media (max-width: 760px) {
+    .reveal__body {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      padding: 1.1rem;
+    }
+  }
+
+  .reveal__main h2 {
+    margin-top: 0;
+  }
+  .reveal__main h3 {
+    margin-top: 1.5rem;
+  }
+
+  .ticks,
+  .bullets {
+    margin: 0 0 1rem;
+    padding-left: 1.1rem;
+  }
+  .ticks li,
+  .bullets li {
+    margin-bottom: 0.5rem;
+  }
+  .ticks {
+    list-style: none;
+    padding-left: 0;
+  }
+  .ticks li {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  .ticks li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--text-faint);
+  }
+
+  .context {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    border-left: 3px solid var(--border-strong);
+    padding-left: 0.9rem;
+    margin-top: 1.25rem;
+  }
+
+  .reveal__side {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+  .panel {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.1rem;
+  }
+  .panel--fix {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .panel__h {
+    margin: 0 0 0.6rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .panel .bullets {
+    font-size: 0.92rem;
+    margin-bottom: 0;
+  }
+
+  .lab-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2.5rem;
+  }
+  .lab-nav__link {
+    display: grid;
+    gap: 0.15rem;
+    text-decoration: none;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    max-width: 48%;
+  }
+  .lab-nav__link:hover {
+    border-color: var(--border-strong);
+  }
+  .lab-nav__link--next {
+    text-align: right;
+    margin-left: auto;
+  }
+  .lab-nav__dir {
+    font-size: 0.76rem;
+    color: var(--text-faint);
+  }
+  .lab-nav__title {
+    font-weight: 580;
+  }
+</style>
+
+<script>
+  interface Progress {
+    [slug: string]: { answer: 'good' | 'bad'; correct: boolean };
+  }
+
+  const KEY = 'bel:progress';
+
+  const read = (): Progress => {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) || '{}') as Progress;
+    } catch {
+      return {};
+    }
+  };
+
+  const judge = document.querySelector<HTMLElement>('[data-judge]');
+  const reveal = document.querySelector<HTMLElement>('[data-reveal]');
+  const ask = document.querySelector<HTMLElement>('[data-judge-ask]');
+  const scored = document.querySelector<HTMLElement>('[data-judge-scored]');
+
+  if (judge && reveal && ask && scored) {
+    const slug = judge.dataset.slug!;
+    const truth = judge.dataset.verdict as 'good' | 'bad';
+
+    const show = (answer: 'good' | 'bad', scroll: boolean) => {
+      const correct = answer === truth;
+      scored.textContent = correct
+        ? `You called it — you said "${answer}", and that is the verdict.`
+        : `You said "${answer}". The verdict below is "${truth}" — read on for why.`;
+      scored.style.color = correct ? 'var(--good)' : 'var(--warn)';
+      ask.hidden = true;
+      scored.hidden = false;
+      reveal.hidden = false;
+      if (scroll) {
+        reveal.focus({ preventScroll: true });
+        reveal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+
+    const saved = read()[slug];
+    if (saved) show(saved.answer, false);
+
+    for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-answer]')) {
+      btn.addEventListener('click', () => {
+        const answer = btn.dataset.answer as 'good' | 'bad';
+        const store = read();
+        store[slug] = { answer, correct: answer === truth };
+        localStorage.setItem(KEY, JSON.stringify(store));
+        show(answer, true);
+      });
+    }
+  }
+</script>

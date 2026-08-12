@@ -1,0 +1,203 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { labs } from '../data/labs';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const bad = labs.filter((lab) => lab.verdict === 'bad');
+const good = labs.filter((lab) => lab.verdict === 'good');
+---
+
+<BaseLayout
+  title="Cheat sheet · Booking Experience Lab"
+  description="Every pattern from the labs, with the tell and the fix, on one page."
+>
+  <div class="page">
+    <header class="head">
+      <p class="eyebrow">Reference</p>
+      <h1>The cheat sheet</h1>
+      <p class="lede">
+        Every pattern from the labs on one page: what it is, how to spot it from the outside, and
+        what to build instead. Spoilers throughout — play the labs first.
+      </p>
+    </header>
+
+    <section aria-labelledby="bad-h">
+      <h2 id="bad-h" class="group-h">
+        <span class="badge badge--bad">Patterns to refuse to ship</span>
+      </h2>
+      <div class="rows">
+        {
+          bad.map((lab) => (
+            <article class="row card">
+              <div class="row__head">
+                <h3 class="row__title">{lab.pattern}</h3>
+                <a class="row__link" href={`${base}/labs/${lab.slug}`}>
+                  Lab: {lab.title} →
+                </a>
+              </div>
+              <div class="row__cols">
+                <div>
+                  <p class="col-h">The tell</p>
+                  <ul>
+                    {lab.spot.slice(0, 3).map((item) => (
+                      <li>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p class="col-h">Build this instead</p>
+                  <ul>
+                    {lab.fix.slice(0, 3).map((item) => (
+                      <li>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              {lab.context && <p class="row__context">{lab.context}</p>}
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="good-h">
+      <h2 id="good-h" class="group-h">
+        <span class="badge badge--good">Patterns worth copying</span>
+      </h2>
+      <div class="rows">
+        {
+          good.map((lab) => (
+            <article class="row card">
+              <div class="row__head">
+                <h3 class="row__title">{lab.pattern}</h3>
+                <a class="row__link" href={`${base}/labs/${lab.slug}`}>
+                  Lab: {lab.title} →
+                </a>
+              </div>
+              <div class="row__cols">
+                <div>
+                  <p class="col-h">What makes it work</p>
+                  <ul>
+                    {lab.spot.slice(0, 3).map((item) => (
+                      <li>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p class="col-h">Keep doing</p>
+                  <ul>
+                    {lab.fix.slice(0, 3).map((item) => (
+                      <li>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="rule prose">
+      <h2>One rule, if you only keep one</h2>
+      <p>
+        Every pattern in the "refuse to ship" list is the same move: the interface knows something
+        the user needs in order to decide, and it withholds, delays, or distorts it until the
+        decision is already made. Fake scarcity distorts availability. Drip pricing delays the
+        price. Preticked extras distort what you chose. The roach motel withholds the exit.
+      </p>
+      <p>
+        Appointments raise the stakes on all four, because the person booking is often unwell,
+        anxious, or working around a job they cannot leave. Friction that merely annoys a shopper
+        will make a patient give up, and a patient who gives up on cancelling does not keep the
+        slot — they simply do not arrive.
+      </p>
+      <p>
+        So the test is not "does this feel manipulative" — that is unreliable from the inside of a
+        team that has stared at the flow for months. The test is: <strong>at the moment the user
+        commits, do they know what they are committing to?</strong> If a screen would lose money by
+        answering that honestly, that is the finding, and it belongs in front of whoever asked for
+        the screen.
+      </p>
+      <p class="rule__back">
+        <a class="btn" href={`${base}/`}>Back to the labs</a>
+      </p>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .head {
+    max-width: var(--measure);
+    margin-bottom: 2.5rem;
+  }
+  .group-h {
+    margin: 2rem 0 1rem;
+  }
+  .rows {
+    display: grid;
+    gap: 0.9rem;
+  }
+  .row {
+    padding: 1.15rem 1.25rem;
+  }
+  .row__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .row__title {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+  .row__link {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .row__link:hover {
+    color: var(--text);
+    text-decoration: underline;
+  }
+  .row__cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+  .col-h {
+    margin: 0 0 0.4rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .row__cols ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.9rem;
+  }
+  .row__cols li {
+    margin-bottom: 0.35rem;
+  }
+  .row__context {
+    margin: 1rem 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border);
+    font-size: 0.84rem;
+    color: var(--text-faint);
+  }
+  .rule {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .rule__back {
+    margin-top: 1.5rem;
+  }
+</style>

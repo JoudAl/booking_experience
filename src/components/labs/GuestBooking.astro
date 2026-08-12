@@ -1,0 +1,309 @@
+---
+// Lab: the honest version of the same booking. Ask for what the appointment needs, nothing more.
+const price = 49;
+---
+
+<div class="gb">
+  <section class="gb__panel" data-gb-panel="book">
+    <div class="gb__summary">
+      <div>
+        <h3 class="gb__h">Northgate Physiotherapy · initial assessment</h3>
+        <p class="gb__sub">Thu 12 Mar · 09:15 · 45 minutes · Dr Okafor</p>
+      </div>
+      <div class="gb__total">
+        <span class="money">${price}.00</span>
+        <span class="gb__totlabel">total, all fees included</span>
+      </div>
+    </div>
+
+    <details class="gb__break">
+      <summary>See the breakdown</summary>
+      <table class="receipt">
+        <tbody>
+          <tr><td>Initial assessment, 45 min</td><td class="money">$49.00</td></tr>
+          <tr><td>Booking fee</td><td class="money">$0.00</td></tr>
+          <tr class="total"><td>Total</td><td class="money">${price}.00</td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <form class="gb__form" data-gb-form novalidate>
+      <label class="field">
+        <span class="label">Your name</span>
+        <input class="input" type="text" name="name" autocomplete="name" required placeholder="Alex Moreno" />
+      </label>
+
+      <label class="field">
+        <span class="label">Mobile number</span>
+        <input class="input" type="tel" name="phone" autocomplete="tel" required placeholder="+1 555 0100" />
+        <span class="hint">So we can text you if the clinic has to move your appointment.</span>
+      </label>
+
+      <label class="field">
+        <span class="label">Email</span>
+        <input class="input" type="email" name="email" autocomplete="email" required placeholder="alex@example.com" />
+        <span class="hint">Your confirmation, with one-tap cancel and reschedule links.</span>
+      </label>
+
+      <div class="gb__terms">
+        <strong>Free to cancel or move until Wed 11 Mar, 09:15.</strong>
+        After that a $20 late-cancellation fee applies. Nothing is charged today — you pay at the
+        clinic.
+      </div>
+
+      <label class="gb__optin">
+        <input type="checkbox" name="reminders" checked />
+        <span>
+          Text me a reminder 24 hours before. <em>Recommended — this is about your appointment, not
+          marketing.</em>
+        </span>
+      </label>
+
+      <label class="gb__optin">
+        <input type="checkbox" name="marketing" />
+        <span>Email me occasional clinic news and health tips. Optional, stop any time.</span>
+      </label>
+
+      <button class="btn btn--primary btn--block gb__pay" type="submit">
+        Confirm appointment
+      </button>
+      <p class="hint gb__center">No account needed. Confirmation arrives in about a minute.</p>
+    </form>
+  </section>
+
+  <section class="gb__panel gb__done" data-gb-panel="done" hidden>
+    <div class="gb__tick" aria-hidden="true">✓</div>
+    <h3 class="gb__h">Booked. Confirmation sent.</h3>
+    <p class="gb__sub">
+      Thu 12 Mar, 09:15 with Dr Okafor · reference <strong>NG-4T92K</strong> · ${price}.00 payable at
+      the clinic.
+    </p>
+
+    <div class="gb__actions">
+      <button class="btn btn--sm" type="button" data-gb-move>Move appointment</button>
+      <button class="btn btn--sm" type="button" data-gb-cancel>Cancel appointment</button>
+    </div>
+    <p class="gb__actions-note">Both take one tap, here and in your confirmation email.</p>
+
+    <div class="gb__after">
+      <p class="gb__after-h">Want to save your details for next time?</p>
+      <p class="gb__after-p">Optional, and your appointment is already confirmed either way.</p>
+      <div class="gb__after-actions">
+        <button class="btn btn--primary btn--sm" type="button" data-gb-account>Create an account</button>
+        <button class="btn btn--sm" type="button" data-gb-noaccount>No thanks</button>
+      </div>
+    </div>
+
+    <p class="gb__tally" data-gb-tally></p>
+  </section>
+
+  <div class="demo-note">
+    <button class="btn btn--sm" type="button" data-gb-reset>Reset the demo</button>
+  </div>
+</div>
+
+<style>
+  .gb__summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .gb__h {
+    margin-bottom: 0.2rem;
+  }
+  .gb__sub {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  .gb__total {
+    text-align: right;
+    display: grid;
+  }
+  .gb__total .money {
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+  .gb__totlabel {
+    font-size: 0.74rem;
+    color: var(--text-faint);
+  }
+
+  .gb__break {
+    margin: 0.9rem 0 1.3rem;
+    font-size: 0.9rem;
+  }
+  .gb__break summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+  .gb__break table {
+    margin-top: 0.6rem;
+    max-width: 340px;
+  }
+
+  .gb__form {
+    max-width: 430px;
+  }
+
+  .gb__terms {
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.85rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.4rem 0 1rem;
+  }
+  .gb__terms strong {
+    color: var(--text);
+    display: block;
+  }
+
+  .gb__optin {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.55rem;
+    align-items: start;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.7rem;
+    cursor: pointer;
+  }
+  .gb__optin input {
+    margin-top: 0.25rem;
+    accent-color: var(--accent);
+  }
+  .gb__optin em {
+    font-style: normal;
+    color: var(--text-faint);
+  }
+
+  .gb__pay {
+    margin-top: 0.5rem;
+    padding-block: 0.78rem;
+    font-size: 1rem;
+  }
+  .gb__center {
+    text-align: center;
+  }
+
+  .gb__done {
+    text-align: center;
+    padding: 1rem 0;
+  }
+  .gb__tick {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 0.7rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--good-soft);
+    color: var(--good);
+    font-size: 1.4rem;
+    border: 1px solid var(--good-border);
+  }
+  .gb__actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+  .gb__actions-note {
+    margin: 0.5rem 0 0;
+    font-size: 0.78rem;
+    color: var(--text-faint);
+  }
+  .gb__after {
+    margin: 1.5rem auto 0;
+    max-width: 420px;
+    padding: 1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .gb__after-h {
+    margin: 0 0 0.2rem;
+    font-weight: 580;
+  }
+  .gb__after-p {
+    margin: 0 0 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .gb__after-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .gb__tally {
+    margin: 1.2rem auto 0;
+    max-width: 500px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.gb');
+  if (root) {
+    const form = root.querySelector<HTMLFormElement>('[data-gb-form]')!;
+    const tally = root.querySelector<HTMLElement>('[data-gb-tally]')!;
+    const started = Date.now();
+
+    const goto = (name: string) => {
+      for (const panel of root.querySelectorAll<HTMLElement>('[data-gb-panel]')) {
+        panel.hidden = panel.dataset.gbPanel !== name;
+      }
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const required = [...form.querySelectorAll<HTMLInputElement>('[required]')];
+      const empty = required.find((el) => !el.value.trim());
+      if (empty) {
+        empty.focus();
+        empty.style.borderColor = 'var(--bad)';
+        return;
+      }
+      const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
+      tally.textContent = `Three fields, ${seconds} seconds, no account, no card — and the cancellation deadline was on screen while you confirmed.`;
+      goto('done');
+    });
+
+    root.querySelector('[data-gb-cancel]')?.addEventListener('click', () => {
+      tally.textContent =
+        'Cancelled in one tap, the same number it took to book. Compare that with the roach motel lab.';
+    });
+
+    root.querySelector('[data-gb-move]')?.addEventListener('click', () => {
+      tally.textContent =
+        'Rescheduling is offered next to cancelling, not in front of it — so it is an option rather than an obstacle.';
+    });
+
+    root.querySelector('[data-gb-account]')?.addEventListener('click', () => {
+      tally.textContent =
+        'Account created after the fact — which is the only point at which the patient had a reason to want one.';
+    });
+
+    root.querySelector('[data-gb-noaccount]')?.addEventListener('click', () => {
+      tally.textContent =
+        'Declined in one click, and the appointment is unaffected. That is what optional means.';
+    });
+
+    root.querySelector('[data-gb-reset]')?.addEventListener('click', () => {
+      form.reset();
+      for (const el of form.querySelectorAll<HTMLInputElement>('.input')) el.style.borderColor = '';
+      goto('book');
+    });
+  }
+</script>

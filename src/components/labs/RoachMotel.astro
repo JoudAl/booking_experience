@@ -1,0 +1,343 @@
+---
+// Lab: roach motel. One click in, a labyrinth out. The demo counts clicks in each direction.
+---
+
+<div class="rm">
+  <div class="rm__counters">
+    <div class="rm__counter">
+      <span class="rm__counter-n" data-rm-in>0</span>
+      <span class="rm__counter-l">clicks to book</span>
+    </div>
+    <div class="rm__counter rm__counter--out">
+      <span class="rm__counter-n" data-rm-out>0</span>
+      <span class="rm__counter-l">clicks to cancel</span>
+    </div>
+  </div>
+
+  <!-- Booking: one click. -->
+  <section class="rm__screen" data-rm-screen="book">
+    <h3 class="rm__h">Northgate Physiotherapy · initial assessment</h3>
+    <p class="rm__sub">Thu 12 Mar · 09:15 · 45 min · $49 · card ending 4242 on file</p>
+    <button class="btn btn--primary rm__big" type="button" data-rm-book>Book instantly — 1 click</button>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="booked" hidden>
+    <div class="rm__ok">✓ Booked. Reference NG-4T92K.</div>
+    <p class="rm__sub">Changed your mind? No problem — manage your appointment any time.</p>
+    <button class="btn" type="button" data-rm-out-step="manage">Manage appointment</button>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="manage" hidden>
+    <h3 class="rm__h">Manage your appointment</h3>
+    <ul class="rm__menu">
+      <li><button class="btn btn--sm" type="button" data-rm-out-step="upsell">Add aftercare pack</button></li>
+      <li><button class="btn btn--sm" type="button" data-rm-out-step="upsell">Extend to 60 minutes</button></li>
+      <li><button class="btn btn--sm" type="button" data-rm-out-step="upsell">Add cancellation cover</button></li>
+      <li><button class="btn btn--sm" type="button" data-rm-out-step="help">Change or cancel →</button></li>
+    </ul>
+    <p class="rm__fine">Cancellations are handled by our Help Centre.</p>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="help" hidden>
+    <h3 class="rm__h">Help Centre</h3>
+    <p class="rm__sub">Search our articles for an answer.</p>
+    <ul class="rm__menu rm__menu--list">
+      <li><button class="btn btn--sm" type="button" data-rm-out-step="article">"How do I cancel an appointment?"</button></li>
+      <li><button class="btn btn--sm" type="button" data-rm-out-step="chat">Chat with Meri, our assistant</button></li>
+      <li><button class="btn btn--sm" type="button" data-rm-out-step="phone">Call us</button></li>
+    </ul>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="article" hidden>
+    <h3 class="rm__h">How do I cancel an appointment?</h3>
+    <p class="rm__sub">
+      Cancellation policies vary by clinic, service type, and practitioner. To cancel, please contact our
+      support team, who will be happy to help.
+    </p>
+    <button class="btn btn--sm" type="button" data-rm-out-step="chat">Contact support</button>
+    <p class="rm__helpful">Was this article helpful? <span>Yes</span> · <span>No</span></p>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="chat" hidden>
+    <h3 class="rm__h">Meri, your assistant</h3>
+    <div class="rm__chat">
+      <p class="rm__bubble">Hi! I can help with opening hours, directions and parking. What do you need?</p>
+      <p class="rm__bubble rm__bubble--me">Cancel my appointment</p>
+      <p class="rm__bubble">
+        I'm sorry, I can't process cancellations. Please use the cancellation request form, or call
+        us during opening hours.
+      </p>
+    </div>
+    <div class="rm__row">
+      <button class="btn btn--sm" type="button" data-rm-out-step="form">Cancellation request form</button>
+      <button class="btn btn--sm" type="button" data-rm-out-step="phone">Opening hours</button>
+    </div>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="phone" hidden>
+    <h3 class="rm__h">Call us</h3>
+    <p class="rm__sub">
+      +1 555 0142 · Monday to Thursday, 9am–4pm CET, excluding public holidays.
+      Average wait time: 24 minutes.
+    </p>
+    <button class="btn btn--sm" type="button" data-rm-out-step="form">Or use the online form</button>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="form" hidden>
+    <h3 class="rm__h">Cancellation request</h3>
+    <div class="rm__grid">
+      <label class="field">
+        <span class="label">Booking reference *</span>
+        <input class="input" type="text" data-rm-ref placeholder="From your confirmation email" />
+      </label>
+      <label class="field">
+        <span class="label">Email used to book *</span>
+        <input class="input" type="email" />
+      </label>
+      <label class="field">
+        <span class="label">Reason for cancelling *</span>
+        <select class="input">
+          <option value="">Please select</option>
+          <option>Change of plans</option>
+          <option>Found a better price</option>
+          <option>No longer needed</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="label">Tell us more *</span>
+        <input class="input" type="text" placeholder="Minimum 20 characters" />
+      </label>
+    </div>
+    <p class="rm__fine">
+      Requests are reviewed within 5 business days. Your appointment remains booked until reviewed.
+    </p>
+    <button class="btn btn--primary btn--sm" type="button" data-rm-out-step="retention">Submit request</button>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="retention" hidden>
+    <h3 class="rm__h">Wait — don't go!</h3>
+    <p class="rm__sub">Here's $15 off your next session if you keep this appointment.</p>
+    <div class="rm__row">
+      <button class="btn btn--primary btn--sm" type="button" data-rm-keep>Keep my appointment and save $15</button>
+      <button class="rm__tiny" type="button" data-rm-out-step="final">continue cancelling</button>
+    </div>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="final" hidden>
+    <h3 class="rm__h">Confirm cancellation</h3>
+    <p class="rm__sub">
+      A $25 cancellation administration fee applies. Any refund takes 14–21 business days.
+    </p>
+    <button class="btn btn--sm" type="button" data-rm-out-step="done">Yes, cancel my appointment</button>
+  </section>
+
+  <section class="rm__screen" data-rm-screen="done" hidden>
+    <div class="rm__ok">Appointment cancelled.</div>
+    <p class="rm__tally" data-rm-tally></p>
+  </section>
+
+  <div class="demo-note">
+    <button class="btn btn--sm" type="button" data-rm-reset>Reset the demo</button>
+    <span class="rm__hint">Book it, then try to cancel it.</span>
+  </div>
+</div>
+
+<style>
+  .rm__counters {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .rm__counter {
+    flex: 1;
+    text-align: center;
+    padding: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+  }
+  .rm__counter--out {
+    background: var(--bad-soft);
+    border-color: var(--bad-border);
+  }
+  .rm__counter-n {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .rm__counter--out .rm__counter-n {
+    color: var(--bad);
+  }
+  .rm__counter-l {
+    font-size: 0.74rem;
+    color: var(--text-faint);
+  }
+
+  .rm__screen {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    min-height: 190px;
+  }
+  .rm__h {
+    margin-bottom: 0.3rem;
+  }
+  .rm__sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    max-width: 56ch;
+  }
+  .rm__big {
+    padding: 0.8rem 1.6rem;
+    font-size: 1rem;
+  }
+  .rm__ok {
+    display: inline-block;
+    background: var(--good-soft);
+    color: var(--good);
+    border: 1px solid var(--good-border);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.8rem;
+    font-weight: 580;
+    margin-bottom: 0.8rem;
+  }
+
+  .rm__menu {
+    list-style: none;
+    margin: 0 0 0.8rem;
+    padding: 0;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .rm__menu--list {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rm__fine {
+    font-size: 0.76rem;
+    color: var(--text-faint);
+    margin: 0.6rem 0 0.9rem;
+  }
+  .rm__helpful {
+    font-size: 0.76rem;
+    color: var(--text-faint);
+    margin-top: 1.2rem;
+  }
+  .rm__helpful span {
+    text-decoration: underline;
+  }
+
+  .rm__chat {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    max-width: 460px;
+  }
+  .rm__bubble {
+    margin: 0;
+    padding: 0.55rem 0.8rem;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .rm__bubble--me {
+    background: var(--accent-soft);
+    justify-self: end;
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  .rm__row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .rm__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0 1rem;
+  }
+
+  /* The escape hatch, styled to be overlooked. */
+  .rm__tiny {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .rm__tally {
+    font-size: 0.92rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.95rem;
+  }
+  .rm__hint {
+    margin-left: 0.6rem;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.rm');
+  if (root) {
+    const inEl = root.querySelector<HTMLElement>('[data-rm-in]')!;
+    const outEl = root.querySelector<HTMLElement>('[data-rm-out]')!;
+    let clicksIn = 0;
+    let clicksOut = 0;
+
+    const goto = (name: string) => {
+      for (const screen of root.querySelectorAll<HTMLElement>('[data-rm-screen]')) {
+        screen.hidden = screen.dataset.rmScreen !== name;
+      }
+    };
+
+    root.querySelector('[data-rm-book]')?.addEventListener('click', () => {
+      clicksIn += 1;
+      inEl.textContent = String(clicksIn);
+      goto('booked');
+    });
+
+    for (const btn of root.querySelectorAll<HTMLElement>('[data-rm-out-step]')) {
+      btn.addEventListener('click', () => {
+        clicksOut += 1;
+        outEl.textContent = String(clicksOut);
+        const next = btn.dataset.rmOutStep!;
+        goto(next);
+        if (next === 'done') {
+          root.querySelector<HTMLElement>('[data-rm-tally]')!.textContent =
+            `It took ${clicksIn} click to take your money and ${clicksOut} to give it back — ${Math.round(
+              clicksOut / Math.max(clicksIn, 1),
+            )}× harder to leave than to join, plus a $25 fee and a three-week wait. None of that asymmetry is technical.`;
+        }
+      });
+    }
+
+    // The upsells and the retention offer are dead ends that still cost a click.
+    for (const btn of root.querySelectorAll<HTMLElement>('[data-rm-keep]')) {
+      btn.addEventListener('click', () => {
+        clicksOut += 1;
+        outEl.textContent = String(clicksOut);
+        goto('booked');
+      });
+    }
+
+    root.querySelector('[data-rm-reset]')?.addEventListener('click', () => {
+      clicksIn = 0;
+      clicksOut = 0;
+      inEl.textContent = '0';
+      outEl.textContent = '0';
+      goto('book');
+    });
+  }
+</script>

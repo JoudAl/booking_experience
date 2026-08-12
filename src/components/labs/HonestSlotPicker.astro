@@ -1,0 +1,517 @@
+---
+// Lab: the same job as DatePickerMaze, done properly.
+// Real availability, price and rules live inside the picker, so the user decides with full information.
+const year = 2026;
+const month = 2; // March
+const monthLabel = 'March 2026';
+
+const first = new Date(year, month, 1);
+const daysInMonth = new Date(year, month + 1, 0).getDate();
+const leading = first.getDay(); // Sunday-start grid
+
+const baseSlots = [
+  { time: '08:30', practitioner: 'Dr Okafor' },
+  { time: '09:15', practitioner: 'Dr Okafor' },
+  { time: '11:00', practitioner: 'A. Lindqvist' },
+  { time: '13:45', practitioner: 'A. Lindqvist' },
+  { time: '16:30', practitioner: 'M. Haddad' },
+  { time: '17:15', practitioner: 'M. Haddad' },
+];
+
+const closedDays: Record<number, string> = {
+  20: 'Clinic closed — staff training',
+  21: 'Clinic closed — staff training',
+};
+
+// Deterministic, so the build output is stable and the demo is reproducible.
+const buildDay = (day: number) => {
+  const date = new Date(year, month, day);
+  const dow = date.getDay();
+
+  if (dow === 0) return { closed: 'Closed on Sundays', slots: [] };
+  if (closedDays[day]) return { closed: closedDays[day], slots: [] };
+
+  const slots = baseSlots.map((slot, i) => {
+    const evening = Number(slot.time.slice(0, 2)) >= 16;
+    return {
+      ...slot,
+      id: `${day}-${slot.time}`,
+      price: evening ? 69 : 49,
+      evening,
+      taken: (day * 3 + i * 5) % 7 < 3,
+    };
+  });
+
+  const free = slots.filter((slot) => !slot.taken).length;
+  return { closed: free === 0 ? 'Fully booked' : null, slots };
+};
+
+const calendar = Array.from({ length: daysInMonth }, (_, i) => {
+  const day = i + 1;
+  const built = buildDay(day);
+  const free = built.slots.filter((slot) => !slot.taken);
+  return {
+    day,
+    closed: built.closed,
+    slots: built.slots,
+    free: free.length,
+    from: free.length ? Math.min(...free.map((slot) => slot.price)) : null,
+  };
+});
+
+const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const firstOpen = calendar.find((entry) => entry.free > 0)!.day;
+---
+
+<div class="hs">
+  <div class="hs__head">
+    <h3 class="hs__h">Book an initial assessment</h3>
+    <ul class="hs__rules">
+      <li>45 minutes, in person at Northgate</li>
+      <li>Free to cancel or move up to 24 hours before</li>
+      <li>Prices include all fees — evening slots cost more, and say so</li>
+    </ul>
+  </div>
+
+  <div class="hs__layout">
+    <div class="hs__cal">
+      <div class="hs__month">
+        <button class="btn btn--sm btn--ghost" type="button" disabled aria-label="Previous month">←</button>
+        <strong>{monthLabel}</strong>
+        <button class="btn btn--sm btn--ghost" type="button" disabled aria-label="Next month">→</button>
+      </div>
+
+      <div class="hs__weekdays" aria-hidden="true">
+        {weekdays.map((d) => <span>{d}</span>)}
+      </div>
+
+      <div class="hs__grid" role="group" aria-label={`${monthLabel} availability`}>
+        {Array.from({ length: leading }, () => <span class="hs__pad" aria-hidden="true"></span>)}
+        {
+          calendar.map((entry) => (
+            <button
+              type="button"
+              class="hs__day"
+              aria-pressed={entry.day === firstOpen ? 'true' : 'false'}
+              data-day={entry.day}
+              disabled={entry.closed !== null}
+              tabindex={entry.day === firstOpen ? 0 : -1}
+              title={entry.closed ?? undefined}
+              aria-label={
+                entry.closed
+                  ? `${entry.day} March, ${entry.closed}`
+                  : `${entry.day} March, ${entry.free} slots free, from $${entry.from}`
+              }
+            >
+              <span class="hs__num">{entry.day}</span>
+              <span class="hs__free">{entry.closed ? '—' : `${entry.free} free`}</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <ul class="hs__legend">
+        <li><span class="hs__swatch hs__swatch--sel"></span> Selected day</li>
+        <li><span class="hs__swatch hs__swatch--free"></span> Has availability</li>
+        <li><span class="hs__swatch hs__swatch--off"></span> Closed or full (hover for reason)</li>
+      </ul>
+    </div>
+
+    <div class="hs__slots">
+      <p class="hs__slots-h" data-hs-dayheading>Times on {firstOpen} March</p>
+
+      {
+        calendar.map((entry) => (
+          <div class="hs__slotlist" data-slots-for={entry.day} hidden={entry.day !== firstOpen}>
+            {entry.closed && <p class="hs__closed">{entry.closed}</p>}
+            {entry.slots.map((slot) => (
+              <button
+                type="button"
+                class="hs__slot"
+                data-slot={slot.id}
+                data-time={slot.time}
+                data-day={entry.day}
+                data-price={slot.price}
+                data-practitioner={slot.practitioner}
+                disabled={slot.taken}
+                aria-pressed="false"
+              >
+                <span class="hs__time">{slot.time}</span>
+                <span class="hs__with">
+                  {slot.practitioner}
+                  {slot.evening && <span class="hs__tag">evening rate</span>}
+                </span>
+                <span class="hs__cost money">{slot.taken ? 'Booked' : `$${slot.price}`}</span>
+              </button>
+            ))}
+          </div>
+        ))
+      }
+    </div>
+
+    <aside class="hs__summary" aria-live="polite">
+      <p class="hs__summary-h">Your appointment</p>
+      <p class="hs__pick" data-hs-pick>Pick a day, then a time.</p>
+      <table class="receipt hs__receipt" data-hs-receipt hidden>
+        <tbody data-hs-lines></tbody>
+      </table>
+      <p class="hs__msg" data-hs-msg hidden></p>
+      <button class="btn btn--primary btn--block" type="button" data-hs-continue disabled>
+        Continue
+      </button>
+      <button class="btn btn--sm btn--ghost hs__clear" type="button" data-hs-clear>Clear selection</button>
+      <p class="hint">Arrow keys move between days; Enter or Space selects.</p>
+    </aside>
+  </div>
+</div>
+
+<style>
+  .hs__head {
+    margin-bottom: 1.25rem;
+  }
+  .hs__h {
+    margin-bottom: 0.4rem;
+  }
+  .hs__rules {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .hs__rules li::before {
+    content: '✓ ';
+    color: var(--accent);
+  }
+
+  .hs__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) 230px;
+    gap: 1.25rem;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .hs__layout {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+    }
+    .hs__summary {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 620px) {
+    .hs__layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .hs__month {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+
+  .hs__weekdays,
+  .hs__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .hs__weekdays {
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    text-align: center;
+    margin-bottom: 3px;
+  }
+
+  .hs__day {
+    display: grid;
+    gap: 1px;
+    padding: 0.35rem 0.1rem;
+    font: inherit;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+    color: var(--text);
+    min-height: 48px;
+    align-content: center;
+  }
+  .hs__day:hover:not(:disabled) {
+    border-color: var(--accent);
+  }
+  .hs__num {
+    font-size: 0.9rem;
+    font-weight: 560;
+    line-height: 1.1;
+  }
+  .hs__free {
+    font-size: 0.62rem;
+    color: var(--accent);
+  }
+  .hs__day:disabled {
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--surface-2),
+      var(--surface-2) 4px,
+      var(--surface-3) 4px,
+      var(--surface-3) 8px
+    );
+    color: var(--text-faint);
+    cursor: not-allowed;
+  }
+  .hs__day:disabled .hs__free {
+    color: var(--text-faint);
+  }
+  .hs__day.is-selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+  .hs__day.is-selected .hs__free {
+    color: color-mix(in srgb, var(--accent-text) 80%, transparent);
+  }
+
+  .hs__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.9rem;
+    list-style: none;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    font-size: 0.74rem;
+    color: var(--text-faint);
+  }
+  .hs__legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .hs__swatch {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    border: 1px solid var(--border-strong);
+    display: inline-block;
+  }
+  .hs__swatch--sel {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .hs__swatch--free {
+    background: var(--surface);
+  }
+  .hs__swatch--off {
+    background: var(--surface-3);
+  }
+
+  .hs__slots-h {
+    margin: 0 0 0.5rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .hs__slotlist {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .hs__slot {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.5rem 0.65rem;
+    font: inherit;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .hs__slot:hover:not(:disabled) {
+    border-color: var(--accent);
+  }
+  .hs__slot:disabled {
+    background: var(--surface-2);
+    color: var(--text-faint);
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .hs__slot.is-selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+  .hs__time {
+    font-weight: 620;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+  }
+  .hs__with {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+  }
+  .hs__slot.is-selected .hs__with {
+    color: color-mix(in srgb, var(--accent-text) 85%, transparent);
+  }
+  .hs__tag {
+    font-size: 0.66rem;
+    color: var(--warn);
+  }
+  .hs__cost {
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+  .hs__closed {
+    margin: 0;
+    padding: 0.6rem 0.7rem;
+    background: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .hs__summary {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .hs__summary-h {
+    margin: 0 0 0.3rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .hs__pick {
+    margin: 0 0 0.8rem;
+    font-weight: 560;
+    font-size: 0.95rem;
+  }
+  .hs__receipt {
+    margin-bottom: 0.8rem;
+    font-size: 0.84rem;
+  }
+  .hs__msg {
+    margin: 0 0 0.8rem;
+    font-size: 0.84rem;
+    color: var(--good);
+  }
+  .hs__clear {
+    margin-top: 0.4rem;
+    width: 100%;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.hs');
+  if (root) {
+    const days = [...root.querySelectorAll<HTMLButtonElement>('.hs__day')];
+    const slots = [...root.querySelectorAll<HTMLButtonElement>('.hs__slot')];
+    const heading = root.querySelector<HTMLElement>('[data-hs-dayheading]')!;
+    const pick = root.querySelector<HTMLElement>('[data-hs-pick]')!;
+    const receipt = root.querySelector<HTMLElement>('[data-hs-receipt]')!;
+    const lines = root.querySelector<HTMLElement>('[data-hs-lines]')!;
+    const msg = root.querySelector<HTMLElement>('[data-hs-msg]')!;
+    const cta = root.querySelector<HTMLButtonElement>('[data-hs-continue]')!;
+
+    let activeDay = Number(days.find((d) => d.getAttribute('aria-pressed') === 'true')?.dataset.day);
+    let chosen: HTMLButtonElement | null = null;
+
+    const showDay = (day: number) => {
+      activeDay = day;
+      for (const list of root.querySelectorAll<HTMLElement>('[data-slots-for]')) {
+        list.hidden = Number(list.dataset.slotsFor) !== day;
+      }
+      for (const el of days) {
+        const isDay = Number(el.dataset.day) === day;
+        el.classList.toggle('is-selected', isDay);
+        el.setAttribute('aria-pressed', String(isDay));
+      }
+      heading.textContent = `Times on ${day} March`;
+    };
+
+    const paint = () => {
+      for (const slot of slots) {
+        const on = slot === chosen;
+        slot.classList.toggle('is-selected', on);
+        slot.setAttribute('aria-pressed', String(on));
+      }
+
+      if (!chosen) {
+        receipt.hidden = true;
+        pick.textContent = 'Pick a day, then a time.';
+        cta.disabled = true;
+        cta.textContent = 'Continue';
+        return;
+      }
+
+      const price = Number(chosen.dataset.price);
+      const evening = price > 49;
+      pick.textContent = `${chosen.dataset.day} March at ${chosen.dataset.time} · ${chosen.dataset.practitioner}`;
+      lines.innerHTML = [
+        `<tr><td>Initial assessment, 45 min</td><td class="money">$49.00</td></tr>`,
+        evening ? `<tr><td>Evening rate</td><td class="money">$20.00</td></tr>` : '',
+        `<tr class="total"><td>Total</td><td class="money">$${price}.00</td></tr>`,
+      ].join('');
+      receipt.hidden = false;
+      cta.disabled = false;
+      cta.textContent = `Confirm · $${price}.00`;
+    };
+
+    days.forEach((el, i) => {
+      el.addEventListener('click', () => showDay(Number(el.dataset.day)));
+
+      // Roving tabindex: one stop in the grid, arrow keys inside it.
+      el.addEventListener('keydown', (event) => {
+        const moves: Record<string, number> = {
+          ArrowRight: 1,
+          ArrowLeft: -1,
+          ArrowDown: 7,
+          ArrowUp: -7,
+        };
+        const delta = moves[event.key];
+        if (delta === undefined) return;
+        event.preventDefault();
+        const next = days[i + delta];
+        if (!next) return;
+        el.tabIndex = -1;
+        next.tabIndex = 0;
+        next.focus();
+      });
+    });
+
+    for (const slot of slots) {
+      slot.addEventListener('click', () => {
+        chosen = slot;
+        msg.hidden = true;
+        paint();
+      });
+    }
+
+    root.querySelector('[data-hs-clear]')?.addEventListener('click', () => {
+      chosen = null;
+      msg.hidden = true;
+      paint();
+    });
+
+    cta.addEventListener('click', () => {
+      msg.hidden = false;
+      msg.textContent =
+        'In a real booking this is where you confirm — with the same price, time and practitioner you have been looking at all along.';
+    });
+
+    showDay(activeDay);
+    paint();
+  }
+</script>

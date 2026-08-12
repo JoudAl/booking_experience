@@ -1,0 +1,266 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { labs } from '../data/labs';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const badCount = labs.filter((lab) => lab.verdict === 'bad').length;
+const goodCount = labs.length - badCount;
+---
+
+<BaseLayout title="Booking Experience Lab">
+  <div class="page">
+    <section class="hero">
+      <p class="eyebrow">A hands-on tutorial</p>
+      <h1>Ten appointment booking flows. Some are hostile. Can you tell which?</h1>
+      <p class="lede">
+        Every lab is a working appointment booking interface. Use it like you would use a real one —
+        try to get the slot, decline the extras, cancel the appointment. Then call it: good
+        experience or bad one? The reveal tells you which pattern you just walked into, why it works
+        on people, and how it should have been built.
+      </p>
+      <div class="hero__actions">
+        <a class="btn btn--primary" href={`${base}/labs/${labs[0].slug}`}>Start with lab 01</a>
+        <a class="btn" href={`${base}/cheatsheet`}>Skip to the cheat sheet</a>
+      </div>
+      <p class="hero__meta">
+        {labs.length} labs · {badCount} demonstrate a dark pattern · {goodCount} show the honest
+        version · nothing leaves your browser
+      </p>
+    </section>
+
+    <section class="progress" data-progress hidden aria-live="polite">
+      <div class="progress__text">
+        <strong data-progress-done>0</strong> of {labs.length} labs judged ·
+        <strong data-progress-correct>0</strong> called correctly
+      </div>
+      <div class="progress__track" aria-hidden="true">
+        <div class="progress__fill" data-progress-fill style="width:0%"></div>
+      </div>
+      <button class="btn btn--sm btn--ghost" type="button" data-progress-reset>Reset progress</button>
+    </section>
+
+    <section aria-labelledby="labs-h">
+      <h2 id="labs-h" class="section-h">The labs</h2>
+      <ul class="grid">
+        {
+          labs.map((lab, i) => (
+            <li>
+              <a class="lab-card" href={`${base}/labs/${lab.slug}`} data-card={lab.slug}>
+                <div class="lab-card__top">
+                  <span class="lab-card__num">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="lab-card__state" data-card-state hidden></span>
+                </div>
+                <h3 class="lab-card__title">{lab.title}</h3>
+                <p class="lab-card__tagline">{lab.tagline}</p>
+                <ul class="lab-card__tags">
+                  {lab.tags.map((tag) => (
+                    <li class="badge">{tag}</li>
+                  ))}
+                </ul>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="how prose">
+      <h2 class="section-h">How to use this</h2>
+      <p>
+        Do not read the reveal first. The labs only work if you interact with them the way you
+        interact with a real booking page — quickly, half-attentively, trying to get to the end.
+        That is the state these patterns are designed for, and noticing one while you are in it is a
+        completely different skill from recognising it in a slide deck.
+      </p>
+      <p>
+        Not every lab is a trap. Three of them are examples of the same job done honestly, and they
+        are mixed in without warning, because "is this manipulative?" is a question you have to
+        actually ask rather than assume.
+      </p>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .hero {
+    max-width: 62ch;
+    margin-bottom: 3rem;
+  }
+  .hero__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+  }
+  .hero__meta {
+    margin-top: 1rem;
+    font-size: 0.83rem;
+    color: var(--text-faint);
+  }
+
+  .section-h {
+    margin-bottom: 1rem;
+  }
+
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 2.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .progress__text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .progress__track {
+    flex: 1;
+    min-width: 140px;
+    height: 6px;
+    background: var(--surface-3);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress__fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  .grid {
+    list-style: none;
+    margin: 0 0 3rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+    gap: 0.9rem;
+  }
+
+  .lab-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .lab-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+  .lab-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  .lab-card__num {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-faint);
+  }
+  .lab-card__state {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+  }
+  .lab-card__state.is-correct {
+    background: var(--good-soft);
+    color: var(--good);
+  }
+  .lab-card__state.is-wrong {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+  .lab-card__title {
+    margin-bottom: 0.3rem;
+    font-size: 1.05rem;
+  }
+  .lab-card__tagline {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 0.9rem;
+    flex: 1;
+  }
+  .lab-card__tags {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .how {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+  }
+</style>
+
+<script>
+  interface Progress {
+    [slug: string]: { answer: 'good' | 'bad'; correct: boolean };
+  }
+
+  const KEY = 'bel:progress';
+
+  const read = (): Progress => {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) || '{}') as Progress;
+    } catch {
+      return {};
+    }
+  };
+
+  const render = () => {
+    const store = read();
+    const entries = Object.entries(store);
+    const bar = document.querySelector<HTMLElement>('[data-progress]');
+    if (!bar) return;
+
+    const cards = document.querySelectorAll<HTMLElement>('[data-card]');
+    const total = cards.length;
+
+    for (const card of cards) {
+      const state = card.querySelector<HTMLElement>('[data-card-state]');
+      const record = store[card.dataset.card!];
+      if (!state) continue;
+      if (!record) {
+        state.hidden = true;
+        continue;
+      }
+      state.hidden = false;
+      state.textContent = record.correct ? 'Called it' : 'Fooled you';
+      state.classList.toggle('is-correct', record.correct);
+      state.classList.toggle('is-wrong', !record.correct);
+    }
+
+    if (!entries.length) {
+      bar.hidden = true;
+      return;
+    }
+
+    bar.hidden = false;
+    const correct = entries.filter(([, v]) => v.correct).length;
+    document.querySelector('[data-progress-done]')!.textContent = String(entries.length);
+    document.querySelector('[data-progress-correct]')!.textContent = String(correct);
+    document.querySelector<HTMLElement>('[data-progress-fill]')!.style.width =
+      `${Math.round((entries.length / total) * 100)}%`;
+  };
+
+  document.querySelector('[data-progress-reset]')?.addEventListener('click', () => {
+    localStorage.removeItem(KEY);
+    render();
+  });
+
+  render();
+</script>

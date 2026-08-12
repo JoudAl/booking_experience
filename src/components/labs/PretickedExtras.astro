@@ -1,0 +1,302 @@
+---
+// Lab: preselected opt-ins + confirmshaming decline copy.
+const serviceTotal = 49;
+
+const extras = [
+  {
+    id: 'cover',
+    name: 'Cancellation cover',
+    blurb: 'Waives the late-cancellation fee, subject to policy terms.',
+    price: 12,
+    decline: "No thanks, I'll risk paying the full fee",
+  },
+  {
+    id: 'extended',
+    name: 'Extended session (+15 minutes)',
+    blurb: 'Recommended for patients like you.',
+    price: 22,
+    decline: 'No thanks, rush me through it',
+  },
+  {
+    id: 'aftercare',
+    name: 'Aftercare exercise pack',
+    blurb: 'Most patients add this.',
+    price: 18,
+    decline: "No thanks, I won't be doing my exercises",
+  },
+  {
+    id: 'priority',
+    name: 'Priority check-in',
+    blurb: 'Skip the waiting room queue.',
+    price: 9,
+    decline: 'No thanks, I enjoy waiting',
+  },
+  {
+    id: 'reminders',
+    name: 'SMS appointment reminders',
+    blurb: 'Never miss an appointment again.',
+    price: 3,
+    decline: "No thanks, I'd rather forget and be charged for it",
+  },
+];
+
+const defaultExtras = extras.reduce((sum, extra) => sum + extra.price, 0);
+---
+
+<div class="px" data-service-total={serviceTotal}>
+  <h3 class="px__h">Almost done — make your visit better</h3>
+  <p class="px__sub">Northgate Physiotherapy · Thu 12 Mar, 09:15 · initial assessment, 45 min</p>
+
+  <ul class="px__list">
+    {
+      extras.map((extra) => (
+        <li class="px__item">
+          <label class="px__row">
+            <input
+              class="px__check"
+              type="checkbox"
+              checked
+              data-extra={extra.id}
+              data-price={extra.price}
+              data-name={extra.name}
+            />
+            <span class="px__text">
+              <span class="px__name">{extra.name}</span>
+              <span class="px__blurb">{extra.blurb}</span>
+            </span>
+            <span class="px__price money">+${extra.price}</span>
+          </label>
+          <button class="px__decline" type="button" data-decline={extra.id}>
+            {extra.decline}
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="px__dates">
+    <span class="px__dates-label">Changed your mind about the time?</span>
+    <button class="btn btn--sm" type="button" data-px-dates>Move to Thu 11:00</button>
+  </div>
+
+  <div class="px__footer">
+    <table class="receipt">
+      <tbody>
+        <tr><td>Initial assessment, 45 min</td><td class="money">${serviceTotal}.00</td></tr>
+        <tr>
+          <td>Extras (<span data-px-count>{extras.length}</span> selected)</td>
+          <td class="money" data-px-extras>${defaultExtras}.00</td>
+        </tr>
+        <tr class="total"><td>Total</td><td class="money" data-px-total>${serviceTotal + defaultExtras}.00</td></tr>
+      </tbody>
+    </table>
+
+    <button class="btn btn--primary btn--block px__pay" type="button" data-px-pay>
+      Confirm and pay <span data-px-paylabel>${serviceTotal + defaultExtras}.00</span>
+    </button>
+  </div>
+
+  <p class="px__verdict" data-px-verdict hidden></p>
+
+  <div class="demo-note">
+    <button class="btn btn--sm" type="button" data-px-reset>Reset the demo</button>
+    <span class="px__hint">Goal: pay for the appointment and nothing else.</span>
+  </div>
+</div>
+
+<style>
+  .px__h {
+    margin-bottom: 0.2rem;
+  }
+  .px__sub {
+    margin: 0 0 1.25rem;
+    font-size: 0.87rem;
+    color: var(--text-muted);
+  }
+
+  .px__list {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .px__item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.9rem;
+    background: var(--surface-2);
+  }
+  .px__row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: start;
+    cursor: pointer;
+  }
+  .px__check {
+    margin-top: 0.28rem;
+    width: 17px;
+    height: 17px;
+    accent-color: var(--accent);
+  }
+  .px__text {
+    display: grid;
+    gap: 0.1rem;
+  }
+  .px__name {
+    font-weight: 580;
+    font-size: 0.95rem;
+  }
+  .px__blurb {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .px__price {
+    font-weight: 620;
+    white-space: nowrap;
+  }
+
+  /* The decline path: small, grey, apologetic. */
+  .px__decline {
+    display: block;
+    margin: 0.4rem 0 0 1.75rem;
+    padding: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .px__decline:hover {
+    color: var(--text-muted);
+  }
+
+  .px__dates {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.1rem;
+  }
+
+  .px__footer {
+    display: grid;
+    gap: 1rem;
+  }
+  .px__pay {
+    padding-block: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .px__verdict {
+    margin: 1rem 0 0;
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 0.92rem;
+  }
+
+  .px__hint {
+    margin-left: 0.6rem;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.px');
+  if (root) {
+    const serviceTotal = Number(root.dataset.serviceTotal);
+    const boxes = [...root.querySelectorAll<HTMLInputElement>('[data-extra]')];
+    const usd = (n: number) => `$${n.toFixed(2)}`;
+    const defaultExtras = boxes.reduce((sum, b) => sum + Number(b.dataset.price), 0);
+
+    // Interaction cost: how many clicks the user spent declining things.
+    let declines = 0;
+    let sneakyReadd = false;
+
+    const paint = () => {
+      const on = boxes.filter((b) => b.checked);
+      const extras = on.reduce((sum, b) => sum + Number(b.dataset.price), 0);
+      root.querySelector('[data-px-count]')!.textContent = String(on.length);
+      root.querySelector('[data-px-extras]')!.textContent = usd(extras);
+      root.querySelector('[data-px-total]')!.textContent = usd(serviceTotal + extras);
+      root.querySelector('[data-px-paylabel]')!.textContent = usd(serviceTotal + extras);
+    };
+
+    for (const box of boxes) {
+      box.addEventListener('change', () => {
+        if (!box.checked) declines += 1;
+        paint();
+      });
+    }
+
+    for (const link of root.querySelectorAll<HTMLElement>('[data-decline]')) {
+      link.addEventListener('click', () => {
+        const box = boxes.find((b) => b.dataset.extra === link.dataset.decline);
+        if (box?.checked) {
+          box.checked = false;
+          declines += 1;
+          paint();
+        }
+      });
+    }
+
+    // Moving the appointment silently reinstates the cover the user removed.
+    root.querySelector('[data-px-dates]')?.addEventListener('click', () => {
+      const cover = boxes.find((b) => b.dataset.extra === 'cover');
+      if (cover && !cover.checked) {
+        cover.checked = true;
+        sneakyReadd = true;
+        paint();
+      }
+    });
+
+    root.querySelector('[data-px-pay]')?.addEventListener('click', () => {
+      const verdict = root.querySelector<HTMLElement>('[data-px-verdict]');
+      if (!verdict) return;
+      const on = boxes.filter((b) => b.checked);
+      const extras = on.reduce((sum, b) => sum + Number(b.dataset.price), 0);
+
+      const lines: string[] = [];
+      if (extras === 0) {
+        lines.push(
+          `You got out clean — but it cost you ${declines} separate actions to buy nothing. Doing nothing would have cost you ${usd(
+            defaultExtras,
+          )} on top of a ${usd(serviceTotal)} appointment.`,
+        );
+      } else {
+        lines.push(
+          `You paid ${usd(serviceTotal + extras)}, of which ${usd(
+            extras,
+          )} was extras you never asked for: ${on.map((b) => b.dataset.name).join(', ')}.`,
+        );
+      }
+      if (sneakyReadd) {
+        lines.push(
+          'Cancellation cover came back when you moved the appointment. Removing a charge should not be undone by an unrelated change.',
+        );
+      }
+      verdict.hidden = false;
+      verdict.innerHTML = lines.map((l) => `<span>${l}</span>`).join('<br><br>');
+      verdict.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    root.querySelector('[data-px-reset]')?.addEventListener('click', () => {
+      for (const box of boxes) box.checked = true;
+      declines = 0;
+      sneakyReadd = false;
+      root.querySelector<HTMLElement>('[data-px-verdict]')!.hidden = true;
+      paint();
+    });
+
+    paint();
+  }
+</script>

@@ -1,0 +1,325 @@
+---
+// Lab: honest price presentation. The cheapest advertised price is deliberately NOT the cheapest appointment.
+const clinics = [
+  {
+    id: 'northgate',
+    name: 'Northgate Physiotherapy',
+    area: 'Harbour district · 1.2 km away',
+    rating: '4.6',
+    reviews: 2481,
+    base: 39,
+    fees: [
+      { label: 'Booking fee', amount: 6 },
+      { label: 'New patient admin fee', amount: 25 },
+      { label: 'Tax', amount: 6 },
+    ],
+    availability: '3 slots left this week',
+    cancel: 'Free to cancel up to 24 hours before',
+  },
+  {
+    id: 'riverside',
+    name: 'Riverside Physio & Rehab',
+    area: 'Old town · 400 m away',
+    rating: '4.4',
+    reviews: 913,
+    base: 65,
+    fees: [{ label: 'Tax', amount: 5 }],
+    availability: null,
+    cancel: 'Free to cancel up to 12 hours before',
+  },
+  {
+    id: 'linnet',
+    name: 'Linnet Health Practice',
+    area: 'Riverside · 2.4 km away',
+    rating: '4.8',
+    reviews: 340,
+    base: 49,
+    fees: [
+      { label: 'New patient admin fee', amount: 9 },
+      { label: 'Tax', amount: 5 },
+    ],
+    availability: '2 slots left this week',
+    cancel: 'Free to cancel up to 24 hours before',
+  },
+].map((clinic) => {
+  const feeTotal = clinic.fees.reduce((sum, fee) => sum + fee.amount, 0);
+  return { ...clinic, feeTotal, total: clinic.base + feeTotal };
+});
+---
+
+<div class="tt">
+  <div class="tt__bar">
+    <p class="tt__count">3 clinics · initial assessment, 45 minutes · this week</p>
+    <label class="tt__sort">
+      <span>Sort by</span>
+      <select class="input" data-tt-sort>
+        <option value="total">Total price (all fees included)</option>
+        <option value="headline">Advertised "from" price</option>
+      </select>
+    </label>
+  </div>
+
+  <ul class="tt__list" data-tt-list>
+    {
+      clinics.map((clinic) => (
+        <li
+          class="tt__card"
+          data-tt-item
+          data-total={clinic.total}
+          data-headline={clinic.base}
+          data-name={clinic.name}
+        >
+          <div class="tt__thumb" aria-hidden="true">◍</div>
+
+          <div class="tt__info">
+            <h3 class="tt__name">{clinic.name}</h3>
+            <p class="tt__area">{clinic.area}</p>
+            <p class="tt__rating">
+              <strong>{clinic.rating}</strong> ★ · {clinic.reviews.toLocaleString('en-US')} reviews
+            </p>
+            <p class="tt__cancel">{clinic.cancel}</p>
+            {clinic.availability ? (
+              <p class="tt__avail">{clinic.availability}</p>
+            ) : (
+              <p class="tt__avail tt__avail--none">Good availability</p>
+            )}
+          </div>
+
+          <div class="tt__price">
+            <p class="tt__total money">${clinic.total}</p>
+            <p class="tt__unit">total for this appointment</p>
+            <p class="tt__avg money">advertised from ${clinic.base}</p>
+
+            <details class="tt__break">
+              <summary>Price breakdown</summary>
+              <table class="receipt">
+                <tbody>
+                  <tr>
+                    <td>Initial assessment, 45 min</td>
+                    <td class="money">${clinic.base}.00</td>
+                  </tr>
+                  {clinic.fees.map((fee) => (
+                    <tr>
+                      <td>{fee.label}</td>
+                      <td class="money">${fee.amount}.00</td>
+                    </tr>
+                  ))}
+                  <tr class="total">
+                    <td>Total</td>
+                    <td class="money">${clinic.total}.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+
+            <button class="btn btn--primary btn--block" type="button" data-tt-pick={clinic.id}>
+              See times
+            </button>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+
+  <p class="tt__verdict" data-tt-verdict hidden></p>
+
+  <div class="demo-note">
+    Switch the sort to "advertised from price" and watch the order change. Same three clinics, same
+    45-minute assessment — a different winner depending on which number the interface chooses to
+    rank on.
+  </div>
+</div>
+
+<style>
+  .tt__bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tt__count {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  .tt__sort {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .tt__sort .input {
+    width: auto;
+    padding-block: 0.35rem;
+    font-size: 0.85rem;
+  }
+
+  .tt__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .tt__card {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 210px;
+    gap: 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    background: var(--surface);
+  }
+  @media (max-width: 720px) {
+    .tt__card {
+      grid-template-columns: 1fr;
+    }
+    .tt__thumb {
+      display: none;
+    }
+  }
+
+  .tt__thumb {
+    display: grid;
+    place-items: center;
+    background: var(--surface-3);
+    border-radius: var(--radius-sm);
+    color: var(--text-faint);
+    font-size: 1.7rem;
+    min-height: 90px;
+  }
+
+  .tt__name {
+    margin: 0 0 0.1rem;
+    font-size: 1.05rem;
+  }
+  .tt__area,
+  .tt__rating {
+    margin: 0 0 0.15rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .tt__cancel {
+    margin: 0.4rem 0 0;
+    font-size: 0.82rem;
+    color: var(--good);
+  }
+  .tt__avail {
+    margin: 0.1rem 0 0;
+    font-size: 0.82rem;
+    color: var(--warn);
+  }
+  .tt__avail--none {
+    color: var(--text-faint);
+  }
+
+  .tt__price {
+    border-left: 1px solid var(--border);
+    padding-left: 1.1rem;
+    text-align: right;
+  }
+  @media (max-width: 720px) {
+    .tt__price {
+      border-left: none;
+      padding-left: 0;
+      border-top: 1px solid var(--border);
+      padding-top: 0.9rem;
+      text-align: left;
+    }
+  }
+
+  .tt__total {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+  .tt__unit {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--text-faint);
+  }
+  .tt__avg {
+    margin: 0.15rem 0 0.6rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+
+  .tt__break {
+    margin-bottom: 0.7rem;
+    font-size: 0.85rem;
+  }
+  .tt__break summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .tt__break table {
+    margin-top: 0.5rem;
+    text-align: left;
+    font-size: 0.82rem;
+  }
+
+  .tt__verdict {
+    margin: 1.1rem 0 0;
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--good-soft);
+    border: 1px solid var(--good-border);
+    font-size: 0.92rem;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.tt');
+  if (root) {
+    const list = root.querySelector<HTMLElement>('[data-tt-list]')!;
+    const items = [...root.querySelectorAll<HTMLElement>('[data-tt-item]')];
+    const verdict = root.querySelector<HTMLElement>('[data-tt-verdict]')!;
+
+    const cheapestBy = (key: 'total' | 'headline') =>
+      items.reduce((best, item) =>
+        Number(item.dataset[key]) < Number(best.dataset[key]) ? item : best,
+      );
+
+    const cheapestTotal = cheapestBy('total');
+    const cheapestHeadline = cheapestBy('headline');
+
+    const sort = (key: 'total' | 'headline') => {
+      const ordered = [...items].sort(
+        (a, b) => Number(a.dataset[key]) - Number(b.dataset[key]),
+      );
+      for (const item of ordered) list.append(item);
+    };
+
+    root.querySelector<HTMLSelectElement>('[data-tt-sort]')?.addEventListener('change', (event) => {
+      const key = (event.target as HTMLSelectElement).value as 'total' | 'headline';
+      sort(key);
+      verdict.hidden = false;
+      verdict.textContent =
+        key === 'headline'
+          ? `Sorted by the advertised "from" price, ${cheapestHeadline.dataset.name} is first — even though at $${cheapestHeadline.dataset.total} it is the most expensive appointment of the three. Ranking on the headline ranks on how much a clinic has unbundled.`
+          : `Sorted by total, ${cheapestTotal.dataset.name} is first at $${cheapestTotal.dataset.total}, and that is genuinely the cheapest appointment.`;
+    });
+
+    for (const item of items) {
+      item.querySelector('[data-tt-pick]')?.addEventListener('click', () => {
+        const isCheapest = item === cheapestTotal;
+        verdict.hidden = false;
+        verdict.textContent = isCheapest
+          ? `${item.dataset.name} at $${item.dataset.total} — the cheapest appointment, and you could see that before entering a single detail about yourself or your symptoms.`
+          : `${item.dataset.name} at $${item.dataset.total}. Not the cheapest (${cheapestTotal.dataset.name} is $${cheapestTotal.dataset.total}) — but you chose it knowing that, which is the whole point.`;
+        verdict.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    sort('total');
+  }
+</script>

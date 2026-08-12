@@ -1,0 +1,218 @@
+---
+// Lab: trick wording. Mixed polarity, a double negative, and an over-reaching "select all".
+// `sends` = does a ticked box result in marketing being sent?
+const options = [
+  {
+    id: 'deals',
+    label: 'Yes, send me weekly wellness offers and clinic news by email',
+    checked: true,
+    sends: true,
+    plain: 'Weekly marketing email',
+  },
+  {
+    id: 'partners',
+    label: "Don't exclude me from partner offers by SMS",
+    checked: true,
+    sends: true,
+    plain: 'Partner SMS marketing (this one was a double negative)',
+  },
+  {
+    id: 'optout',
+    label: 'Untick this box if you do not wish to hear from our supplement partners',
+    checked: true,
+    sends: true,
+    plain: 'Supplement partner marketing (ticked meant yes, despite the opt-out phrasing)',
+  },
+  {
+    id: 'nopost',
+    label: 'I prefer not to receive printed health guides at my home address',
+    checked: false,
+    sends: true,
+    plain: 'Postal mailings (leaving it unticked meant yes)',
+  },
+  {
+    id: 'research',
+    label: 'Contact me about clinical studies and patient surveys',
+    checked: true,
+    sends: true,
+    plain: 'Research calls and surveys',
+  },
+  {
+    id: 'booking',
+    label: 'Send me my appointment confirmation and 24-hour reminder',
+    checked: true,
+    sends: false,
+    plain: 'Messages about your actual appointment',
+  },
+];
+---
+
+<div class="ct">
+  <h3 class="ct__h">Communication preferences</h3>
+  <p class="ct__sub">
+    Nearly there. Set how you'd like to hear from us, then confirm your appointment.
+  </p>
+
+  <button class="ct__all" type="button" data-ct-all>Select all</button>
+
+  <ul class="ct__list">
+    {
+      options.map((option) => (
+        <li>
+          <label class="ct__row">
+            <input
+              type="checkbox"
+              data-ct-opt={option.id}
+              data-sends={String(option.sends)}
+              data-plain={option.plain}
+              data-essential={String(!option.sends)}
+              checked={option.checked}
+            />
+            <span>{option.label}</span>
+          </label>
+        </li>
+      ))
+    }
+  </ul>
+
+  <button class="btn btn--primary" type="button" data-ct-submit>Confirm appointment</button>
+
+  <div class="ct__result" data-ct-result hidden>
+    <p class="ct__result-h">Here is what you actually signed up for:</p>
+    <ul class="ct__signed" data-ct-signed></ul>
+    <p class="ct__score" data-ct-score></p>
+  </div>
+
+  <div class="demo-note">
+    <button class="btn btn--sm" type="button" data-ct-reset>Reset the demo</button>
+    <span class="ct__hint">Target: get your appointment reminder and nothing else.</span>
+  </div>
+</div>
+
+<style>
+  .ct__h {
+    margin-bottom: 0.25rem;
+  }
+  .ct__sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  .ct__all {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.82rem;
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-bottom: 0.8rem;
+  }
+  .ct__list {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.9rem;
+  }
+  .ct__row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.6rem;
+    align-items: start;
+    font-size: 0.89rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .ct__row input {
+    margin-top: 0.24rem;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+  }
+
+  .ct__result {
+    margin-top: 1.25rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+  }
+  .ct__result-h {
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+  }
+  .ct__signed {
+    margin: 0 0 0.8rem;
+    padding-left: 1.1rem;
+    font-size: 0.9rem;
+  }
+  .ct__signed li {
+    margin-bottom: 0.3rem;
+  }
+  .ct__signed li.is-marketing {
+    color: var(--bad);
+  }
+  .ct__score {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 560;
+  }
+  .ct__hint {
+    margin-left: 0.6rem;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.ct');
+  if (root) {
+    const boxes = [...root.querySelectorAll<HTMLInputElement>('[data-ct-opt]')];
+    const result = root.querySelector<HTMLElement>('[data-ct-result]')!;
+    const signed = root.querySelector<HTMLElement>('[data-ct-signed]')!;
+    const score = root.querySelector<HTMLElement>('[data-ct-score]')!;
+    const initial = boxes.map((b) => b.checked);
+
+    // "Select all" sweeps up the marketing consents with the harmless one.
+    root.querySelector('[data-ct-all]')?.addEventListener('click', () => {
+      for (const box of boxes) box.checked = true;
+    });
+
+    root.querySelector('[data-ct-submit]')?.addEventListener('click', () => {
+      // The trap: for 'nopost', NOT ticking is what signs you up.
+      const subscribed = boxes.filter((box) => {
+        const sends = box.dataset.sends === 'true';
+        if (!sends) return false;
+        return box.dataset.ctOpt === 'nopost' ? !box.checked : box.checked;
+      });
+
+      const service = boxes.find((b) => b.dataset.essential === 'true');
+
+      const items: string[] = subscribed.map(
+        (box) => `<li class="is-marketing">${box.dataset.plain}</li>`,
+      );
+      if (service?.checked) items.push(`<li>${service.dataset.plain}</li>`);
+      if (!items.length) items.push('<li>Nothing at all.</li>');
+
+      signed.innerHTML = items.join('');
+      score.textContent =
+        subscribed.length === 0
+          ? 'You beat it — but you had to parse six labels, one of them a double negative, to book a physio appointment.'
+          : `You signed up for ${subscribed.length} marketing channel${
+              subscribed.length === 1 ? '' : 's'
+            }. Every one of them came from a label written to be misread at speed.`;
+      score.style.color = subscribed.length === 0 ? 'var(--good)' : 'var(--bad)';
+      result.hidden = false;
+      result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    root.querySelector('[data-ct-reset]')?.addEventListener('click', () => {
+      boxes.forEach((box, i) => {
+        box.checked = initial[i];
+      });
+      result.hidden = true;
+    });
+  }
+</script>
