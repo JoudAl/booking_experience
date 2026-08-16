@@ -1,0 +1,157 @@
+---
+import { service } from '../../data/booking';
+---
+
+<section data-step="done" class="page dn" hidden>
+  <div class="card dn__box">
+    <div class="dn__tick" aria-hidden="true">✓</div>
+    <h1 class="dn__h">Tack!</h1>
+    <p class="small muted">Bekräftelse skickas inom 72 timmar.</p>
+
+    <dl class="dn__list">
+      <div><dt>Prov</dt><dd data-dn-prov>—</dd></div>
+      <div><dt>Tid</dt><dd data-dn-when>—</dd></div>
+      <div><dt>Plats</dt><dd>{service.centre}</dd></div>
+      <div><dt>Betalat</dt><dd data-dn-total>—</dd></div>
+    </dl>
+    <p class="tiny faint dn__ref">Bokningsnr <span class="mono" data-dn-ref></span></p>
+  </div>
+
+  <div class="dn__ups">
+    {
+      [
+        ['Extra körlektion', '649 kr'],
+        ['Teoriapp Premium', '199 kr'],
+        ['Hämtning till provet', '249 kr'],
+      ].map(([name, price]) => (
+        <div class="dn__up">
+          <b>{name}</b>
+          <span class="tiny muted">{price}</span>
+          <button class="btn btn--brand dn__up-btn" data-dn-up>
+            Lägg till
+          </button>
+        </div>
+      ))
+    }
+  </div>
+
+  <p class="tiny faint dn__foot">
+    <button class="dn__link" data-dn-help>Hjälp</button> ·
+    <button class="dn__link" data-dn-cancel>Avboka</button>
+  </p>
+</section>
+
+<style>
+  .dn {
+    padding-block: clamp(1.25rem, 4vw, 2rem);
+    max-width: 620px;
+  }
+  .dn__box {
+    padding: clamp(1.1rem, 4vw, 1.75rem);
+    text-align: center;
+  }
+  .dn__tick {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 0.6rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #e7f8ee;
+    color: var(--go-dark);
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+  .dn__h {
+    font-size: 1.5rem;
+  }
+  .dn__list {
+    text-align: left;
+    margin: 1.1rem 0 0;
+    display: grid;
+    gap: 0.2rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.8rem;
+  }
+  .dn__list div {
+    display: flex;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    padding: 0.22rem 0;
+  }
+  .dn__list dt {
+    width: 5rem;
+    flex: none;
+    color: var(--text-faint);
+  }
+  .dn__list dd {
+    margin: 0;
+    font-weight: 600;
+  }
+  .dn__ref {
+    text-align: left;
+    margin: 0.7rem 0 0;
+  }
+  .dn__ups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .dn__up {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.8rem;
+    display: grid;
+    gap: 0.15rem;
+    justify-items: start;
+  }
+  .dn__up b {
+    font-size: 0.88rem;
+  }
+  .dn__up-btn {
+    margin-top: 0.35rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  .dn__foot {
+    margin-top: 1.3rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.7rem;
+  }
+  .dn__link {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--text-faint);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .dn__link:hover {
+    color: var(--text-muted);
+  }
+</style>
+
+<script>
+  import { state, goTo, kr, grandTotal, onStep } from '../../scripts/flow';
+  import { provById } from '../../data/booking';
+
+  onStep('done', () => {
+    const set = (sel: string, v: string) => {
+      const el = document.querySelector<HTMLElement>(sel);
+      if (el) el.textContent = v;
+    };
+    set('[data-dn-prov]', provById(state.provtyp)?.name ?? '');
+    set('[data-dn-when]', `${state.date} ${state.time}`);
+    set('[data-dn-total]', kr(grandTotal()));
+    set('[data-dn-ref]', state.bookingRef);
+  });
+
+  for (const b of document.querySelectorAll('[data-dn-up]')) {
+    b.addEventListener('click', () => goTo('help'));
+  }
+  document.querySelector('[data-dn-help]')?.addEventListener('click', () => goTo('help'));
+  document.querySelector('[data-dn-cancel]')?.addEventListener('click', () => goTo('help'));
+</script>

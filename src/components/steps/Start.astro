@@ -1,0 +1,196 @@
+---
+import { service, provtyper } from '../../data/booking';
+---
+
+<section data-step="start" class="page st">
+  <div class="st__hero">
+    <div class="st__art" aria-hidden="true">
+      <span class="st__sign">B</span>
+    </div>
+
+    <div class="st__panel">
+      <h1 class="st__h">Boka förarprov</h1>
+      <p class="st__where small muted">{service.centre} · {service.city}</p>
+
+      <div class="seg st__seg" role="group">
+        {
+          provtyper.map((p) => (
+            <button data-st-typ={p.id} data-st-price={p.price} aria-pressed={p.id === 'korprov'}>
+              {p.name}
+            </button>
+          ))
+        }
+      </div>
+
+      <p class="st__price">
+        <b data-st-price-out>800 kr</b><sup>*</sup>
+        <span class="tiny faint">*exkl. avgifter</span>
+      </p>
+
+      <p class="st__live small">
+        <span class="dot" aria-hidden="true"></span><b data-st-watchers>1 247</b> bokar just nu
+      </p>
+
+      <button class="btn btn--go btn--lg btn--block" data-st-go>Boka</button>
+    </div>
+  </div>
+
+  <div class="st__strip">
+    {
+      [
+        ['Hagalund', 'Få tider'],
+        ['Järva', 'Fullbokat'],
+        ['Södertälje', 'Fullbokat'],
+        ['Uppsala', 'Fullbokat'],
+      ].map(([place, status], i) => (
+        <div class={`st__place${i === 0 ? ' st__place--on' : ''}`}>
+          <b>{place}</b>
+          <em class={i === 0 ? 'hot' : ''}>{status}</em>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .st {
+    padding-block: clamp(1.25rem, 4vw, 2.25rem);
+  }
+  .st__hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+    gap: clamp(1rem, 3vw, 2rem);
+    align-items: start;
+  }
+  @media (max-width: 800px) {
+    .st__hero {
+      grid-template-columns: 1fr;
+    }
+  }
+  .st__art {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius);
+    background:
+      radial-gradient(90% 70% at 25% 15%, #93c5fd 0%, transparent 55%),
+      linear-gradient(160deg, #1e3a8a, #0f172a 75%);
+    display: grid;
+    place-items: center;
+    box-shadow: var(--shadow);
+  }
+  /* A road sign, drawn in CSS. */
+  .st__sign {
+    display: grid;
+    place-items: center;
+    width: clamp(90px, 22vw, 150px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #fff;
+    border: clamp(8px, 2.2vw, 14px) solid #d92d20;
+    color: #14161d;
+    font-size: clamp(2.4rem, 8vw, 4rem);
+    font-weight: 900;
+  }
+  .st__panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: clamp(1rem, 3vw, 1.5rem);
+    box-shadow: var(--shadow-sm);
+  }
+  .st__h {
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    margin-bottom: 0.15rem;
+  }
+  .st__where {
+    margin-bottom: 1rem;
+  }
+  .st__seg {
+    margin-bottom: 1rem;
+  }
+  .st__price {
+    margin-bottom: 0.4rem;
+  }
+  .st__price b {
+    font-size: 2rem;
+  }
+  .st__price sup {
+    color: var(--text-faint);
+  }
+  .st__live {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--hot);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .dot {
+      animation: blink 1.6s ease-in-out infinite;
+    }
+    @keyframes blink {
+      50% {
+        opacity: 0.25;
+      }
+    }
+  }
+  .st__strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.6rem;
+    margin-top: clamp(1.25rem, 4vw, 2rem);
+  }
+  .st__place {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.85rem;
+    display: grid;
+    gap: 0.1rem;
+  }
+  .st__place--on {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 2px var(--brand-soft);
+  }
+  .st__place em {
+    font-style: normal;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .st__place em.hot {
+    color: var(--hot);
+  }
+</style>
+
+<script>
+  import { state, goTo, kr } from '../../scripts/flow';
+
+  const out = document.querySelector<HTMLElement>('[data-st-price-out]');
+  const buttons = document.querySelectorAll<HTMLElement>('[data-st-typ]');
+
+  for (const b of buttons) {
+    b.addEventListener('click', () => {
+      state.provtyp = b.dataset.stTyp!;
+      state.provPrice = Number(b.dataset.stPrice);
+      for (const other of buttons) other.setAttribute('aria-pressed', String(other === b));
+      if (out) out.textContent = kr(state.provPrice);
+    });
+  }
+
+  document.querySelector('[data-st-go]')?.addEventListener('click', () => goTo('queue'));
+
+  /* A number nobody is counting. */
+  const live = document.querySelector<HTMLElement>('[data-st-watchers]');
+  let n = 1247;
+  setInterval(() => {
+    n = Math.max(980, Math.min(1890, n + Math.floor(Math.random() * 61) - 28));
+    if (live) live.textContent = n.toLocaleString('sv-SE').replace(/ /g, ' ');
+  }, 2600);
+</script>

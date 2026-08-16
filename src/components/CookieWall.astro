@@ -1,0 +1,191 @@
+---
+import { site } from '../data/booking';
+
+const purposes = [
+  'Lagra och/eller få åtkomst till information på en enhet',
+  'Skapa profiler för personanpassad annonsering',
+  'Mäta annonsprestanda',
+  'Förstå målgrupper genom statistik',
+];
+
+const legitimate = [
+  'Mäta innehållsprestanda',
+  'Matcha och kombinera datakällor offline',
+  'Länka olika enheter till samma användare',
+];
+---
+
+<div class="overlay cw" id="cookie-wall" data-cookie-wall>
+  <div class="modal cw__box" role="dialog" aria-modal="true" aria-labelledby="cw-title">
+    <!-- pane 1: the choice that is not one -->
+    <div data-cw-pane="intro">
+      <h2 id="cw-title">Vi värnar om din integritet</h2>
+      <p class="small muted">
+        {site.name} och <b>{site.partners.toLocaleString('sv-SE')} partners</b> använder kakor.
+      </p>
+      <button class="btn btn--go btn--lg btn--block" data-cw-accept>Acceptera alla</button>
+      <div class="cw__links">
+        <button class="optout" data-cw-manage>Hantera inställningar</button>
+      </div>
+    </div>
+
+    <!-- pane 2: seven toggles across two tabs, all on -->
+    <div data-cw-pane="manage" hidden>
+      <h2>Inställningar för samtycke</h2>
+
+      <div class="cw__tabs" role="tablist">
+        <button class="cw__tab" role="tab" aria-selected="true" data-cw-tab="samtycke">
+          Samtycke
+        </button>
+        <button class="cw__tab" role="tab" aria-selected="false" data-cw-tab="berattigat">
+          Berättigat intresse
+        </button>
+      </div>
+
+      <div class="cw__list" data-cw-panel="samtycke">
+        {
+          purposes.map((p, i) => (
+            <label class="cw__row">
+              <span class="cw__txt">{p}</span>
+              <input type="checkbox" checked data-cw-toggle={`c${i}`} />
+            </label>
+          ))
+        }
+      </div>
+
+      <div class="cw__list" data-cw-panel="berattigat" hidden>
+        {
+          legitimate.map((p, i) => (
+            <label class="cw__row">
+              <span class="cw__txt">{p}</span>
+              <input type="checkbox" checked data-cw-toggle={`l${i}`} />
+            </label>
+          ))
+        }
+      </div>
+
+      <button class="btn btn--go btn--lg btn--block" data-cw-accept>Acceptera alla</button>
+      <div class="cw__links">
+        <button class="optout" data-cw-save>Spara mina val</button>
+      </div>
+    </div>
+
+    <!-- pane 3: are you sure? -->
+    <div data-cw-pane="confirm" hidden>
+      <h2>Är du säker?</h2>
+      <p class="small muted">Utan alla kakor fungerar sidan sämre.</p>
+      <button class="btn btn--go btn--lg btn--block" data-cw-accept>
+        Acceptera alla och fortsätt
+      </button>
+      <div class="cw__links">
+        <button class="optout" data-cw-really>Fortsätt med begränsad upplevelse</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .cw__box {
+    width: min(560px, 100%);
+  }
+  .cw__links {
+    text-align: center;
+    margin-top: 0.8rem;
+  }
+  .cw__tabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.6rem;
+  }
+  .cw__tab {
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    cursor: pointer;
+  }
+  .cw__tab[aria-selected='true'] {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+  }
+  .cw__list {
+    max-height: 34vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.6rem;
+    margin-bottom: 0.9rem;
+  }
+  .cw__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--surface-3);
+  }
+  .cw__row:last-child {
+    border-bottom: 0;
+  }
+  .cw__txt {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+  .cw__row input {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    accent-color: var(--go);
+  }
+</style>
+
+<script>
+  const wall = document.querySelector<HTMLElement>('[data-cookie-wall]');
+  const panes = document.querySelectorAll<HTMLElement>('[data-cw-pane]');
+
+  const show = (name: string) => {
+    for (const p of panes) p.hidden = p.dataset.cwPane !== name;
+  };
+
+  const dismiss = () => {
+    if (wall) wall.hidden = true;
+  };
+
+  for (const b of document.querySelectorAll('[data-cw-accept]')) {
+    b.addEventListener('click', dismiss);
+  }
+  document.querySelector('[data-cw-manage]')?.addEventListener('click', () => show('manage'));
+  document.querySelector('[data-cw-save]')?.addEventListener('click', () => show('confirm'));
+  document.querySelector('[data-cw-really]')?.addEventListener('click', dismiss);
+
+  for (const tab of document.querySelectorAll<HTMLElement>('[data-cw-tab]')) {
+    tab.addEventListener('click', () => {
+      const name = tab.dataset.cwTab;
+      for (const t of document.querySelectorAll<HTMLElement>('[data-cw-tab]')) {
+        t.setAttribute('aria-selected', String(t === tab));
+      }
+      for (const p of document.querySelectorAll<HTMLElement>('[data-cw-panel]')) {
+        p.hidden = p.dataset.cwPanel !== name;
+      }
+    });
+  }
+
+  /* Every toggle you switch off switches itself back on a moment later,
+     "because the change could not be saved". Only once per toggle, so the
+     panel stays usable rather than becoming a fight. */
+  const nagged = new Set<string>();
+  for (const input of document.querySelectorAll<HTMLInputElement>('[data-cw-toggle]')) {
+    const id = input.dataset.cwToggle!;
+    input.addEventListener('change', () => {
+      if (input.checked || nagged.has(id)) return;
+      nagged.add(id);
+      setTimeout(() => {
+        input.checked = true;
+      }, 900);
+    });
+  }
+</script>

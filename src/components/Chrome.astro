@@ -1,0 +1,295 @@
+---
+import { site } from '../data/booking';
+---
+
+<header class="hdr">
+  <div class="page hdr__in">
+    <button class="logo" type="button" data-logo aria-label={site.name}>
+      <span class="logo__mark" aria-hidden="true">K</span>
+      <span class="logo__word">{site.name}</span>
+    </button>
+
+    <div class="hdr__right">
+      <div class="timer" data-timer hidden>
+        <span class="timer__lbl">Tiden är reserverad i</span>
+        <span class="timer__val mono" data-timer-val>10:00</span>
+      </div>
+      <span class="hdr__acct small faint" data-acct hidden>Inloggad</span>
+    </div>
+  </div>
+
+  <div class="prog" data-progress hidden>
+    <div class="page prog__in">
+      <span class="prog__lbl" data-progress-label>Steg 1 av 3</span>
+      <div class="prog__track" aria-hidden="true"><i class="prog__fill" data-progress-fill></i></div>
+    </div>
+  </div>
+</header>
+
+<!-- "Andra tittar också" — social proof, generated locally. -->
+<div class="toasts" data-toasts aria-live="off"></div>
+
+<style>
+  .hdr {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .hdr__in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 60px;
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .logo__mark {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(140deg, var(--brand), #a21caf);
+    color: #fff;
+    font-size: 0.95rem;
+  }
+  .hdr__right {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+  .timer {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--hot-soft);
+    border: 1px solid #f5c2be;
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    color: var(--hot);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .timer__val {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 620px) {
+    .timer__lbl {
+      display: none;
+    }
+    .logo__word {
+      font-size: 1rem;
+    }
+  }
+
+  .prog {
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    padding: 0.4rem 0;
+  }
+  .prog__in {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .prog__lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .prog__track {
+    flex: 1;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--surface-3);
+    overflow: hidden;
+  }
+  .prog__fill {
+    display: block;
+    height: 100%;
+    width: 20%;
+    background: var(--brand);
+    transition: width 0.35s ease;
+  }
+
+  .toasts {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+  }
+  .toasts :global(.toast) {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--go);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    padding: 0.55rem 0.8rem;
+    font-size: 0.8rem;
+    max-width: 280px;
+  }
+  .toasts :global(.toast b) {
+    font-weight: 700;
+  }
+  .toasts :global(.toast span) {
+    display: block;
+    color: var(--text-faint);
+    font-size: 0.7rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .toasts :global(.toast) {
+      animation: slidein 0.3s ease-out;
+    }
+    @keyframes slidein {
+      from {
+        opacity: 0;
+        transform: translateX(-12px);
+      }
+    }
+  }
+</style>
+
+<script>
+  import { state, onStep } from '../scripts/flow';
+
+  /* --- the reservation countdown ---------------------------------
+     Ten minutes that never actually run out: at 00:00 it quietly
+     starts again from the top. It appears once slot selection begins
+     and stays for the rest of the flow.                     */
+
+  const box = document.querySelector<HTMLElement>('[data-timer]');
+  const val = document.querySelector<HTMLElement>('[data-timer-val]');
+  let left = 600;
+  let running = false;
+
+  const paint = () => {
+    if (!val) return;
+    const m = Math.floor(left / 60);
+    const s = left % 60;
+    val.textContent = `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  setInterval(() => {
+    if (!running) return;
+    left -= 1;
+    if (left <= 0) left = 600;
+    paint();
+  }, 1000);
+
+  for (const step of ['booking', 'account', 'extras', 'kallelse', 'payment'] as const) {
+    onStep(step, () => {
+      running = true;
+      if (box) box.hidden = false;
+    });
+  }
+  onStep('done', () => {
+    running = false;
+    if (box) box.hidden = true;
+  });
+  onStep('help', () => {
+    running = false;
+    if (box) box.hidden = true;
+  });
+
+  /* --- progress bar fill ------------------------------------------
+     The label and the fill disagree with each other on purpose.    */
+
+  const fill = document.querySelector<HTMLElement>('[data-progress-fill]');
+  const WIDTHS: Record<string, string> = {
+    booking: '55%',
+    account: '80%',
+    extras: '35%',
+    kallelse: '60%',
+    payment: '72%',
+  };
+  document.addEventListener('flow:step', (e) => {
+    const step = (e as CustomEvent<string>).detail;
+    if (fill && WIDTHS[step]) fill.style.width = WIDTHS[step];
+  });
+
+  /* --- "Elsa i Göteborg bokade precis 2 tider" --------------------- */
+
+  const NAMES = [
+    'Elsa', 'Noah', 'Alma', 'Liam', 'Maja', 'Hugo', 'Ines', 'Vidar',
+    'Saga', 'Milo', 'Freja', 'Ali', 'Tuva', 'Elias', 'Nour',
+  ];
+  const CITIES = [
+    'Göteborg', 'Malmö', 'Uppsala', 'Umeå', 'Linköping', 'Örebro',
+    'Sundsvall', 'Växjö', 'Luleå', 'Kiruna', 'Visby',
+  ];
+  const AGO = ['för 12 sekunder sedan', 'för 1 minut sedan', 'just nu', 'för 40 sekunder sedan'];
+
+  const pick = <T,>(a: readonly T[]) => a[Math.floor(Math.random() * a.length)];
+  const tray = document.querySelector<HTMLElement>('[data-toasts]');
+
+  const showToast = () => {
+    if (!tray || state.step === 'done' || state.step === 'help') return;
+    const n = 1 + Math.floor(Math.random() * 4);
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML =
+      `<b>${pick(NAMES)}</b> i ${pick(CITIES)} bokade precis ${n} ` +
+      `${n === 1 ? 'tid' : 'tider'}<span>${pick(AGO)}</span>`;
+    tray.append(el);
+    setTimeout(() => el.remove(), 6500);
+  };
+
+  const loop = () => {
+    showToast();
+    setTimeout(loop, 9000 + Math.random() * 7000);
+  };
+  setTimeout(loop, 6000);
+
+  /* --- account chip ------------------------------------------------ */
+  const acct = document.querySelector<HTMLElement>('[data-acct]');
+  for (const step of ['extras', 'kallelse', 'payment', 'done'] as const) {
+    onStep(step, () => {
+      if (acct) acct.hidden = false;
+    });
+  }
+
+  /* --- booth reset -------------------------------------------------
+     Two ways back to a clean start for the next pupil:
+       · five quick taps on the logo
+       · three minutes without a single click, tap or keypress       */
+
+  let taps = 0;
+  let tapTimer: ReturnType<typeof setTimeout>;
+  document.querySelector('[data-logo]')?.addEventListener('click', () => {
+    taps += 1;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => (taps = 0), 1200);
+    if (taps >= 5) location.reload();
+  });
+
+  let idle: ReturnType<typeof setTimeout>;
+  const bump = () => {
+    clearTimeout(idle);
+    idle = setTimeout(() => location.reload(), 180000);
+  };
+  for (const evt of ['pointerdown', 'keydown', 'wheel', 'touchstart']) {
+    addEventListener(evt, bump, { passive: true });
+  }
+  bump();
+</script>

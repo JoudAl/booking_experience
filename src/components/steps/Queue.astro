@@ -1,0 +1,180 @@
+---
+import { service } from '../../data/booking';
+---
+
+<section data-step="queue" class="page q" hidden>
+  <div class="q__card">
+    <div class="q__spin" aria-hidden="true"></div>
+
+    <h1 class="q__h">Du står i kö</h1>
+    <p class="muted small">{service.centre}</p>
+
+    <p class="q__pos">
+      Din plats i kön: <b data-q-pos>4 812</b>
+    </p>
+    <div class="q__track" aria-hidden="true"><i data-q-fill></i></div>
+
+    <p class="q__eta small muted">Beräknad väntetid: <b data-q-eta>ca 6 minuter</b></p>
+    <p class="q__note small" data-q-note></p>
+
+    <div class="q__warn"><b>Uppdatera inte sidan.</b> Du förlorar din plats.</div>
+
+    <div class="q__plus">
+      <div>
+        <b>Slipp kön med Körklar Plus</b>
+        <p class="tiny muted" style="margin:.15rem 0 0">79 kr/mån, 12 mån bindningstid.</p>
+      </div>
+      <button class="btn btn--brand" data-q-plus>Testa gratis</button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .q {
+    padding-block: clamp(2rem, 8vh, 4rem);
+    display: grid;
+    place-items: center;
+  }
+  .q__card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: clamp(1.25rem, 4vw, 2rem);
+    width: min(520px, 100%);
+    text-align: center;
+  }
+  .q__spin {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    border: 3px solid var(--surface-3);
+    border-top-color: var(--brand);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .q__spin {
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  }
+  .q__h {
+    font-size: 1.5rem;
+  }
+  .q__pos {
+    margin: 1.1rem 0 0.5rem;
+    font-size: 1rem;
+  }
+  .q__pos b {
+    font-size: 1.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .q__track {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--surface-3);
+    overflow: hidden;
+    margin-bottom: 0.6rem;
+  }
+  .q__track i {
+    display: block;
+    height: 100%;
+    width: 4%;
+    background: var(--brand);
+    transition: width 0.5s ease;
+  }
+  .q__eta {
+    margin-bottom: 0.3rem;
+  }
+  .q__note {
+    min-height: 1.3em;
+    color: var(--warn);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .q__warn {
+    background: var(--hot-soft);
+    border: 1px solid #f5c2be;
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.78rem;
+    text-align: left;
+    color: #7f1d1d;
+    margin-bottom: 1rem;
+  }
+  .q__plus {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.9rem;
+    text-align: left;
+    border: 1px dashed var(--brand);
+    background: var(--brand-soft);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.85rem;
+  }
+  .q__plus b {
+    font-size: 0.9rem;
+  }
+</style>
+
+<script>
+  import { goTo, onStep } from '../../scripts/flow';
+
+  const posEl = document.querySelector<HTMLElement>('[data-q-pos]');
+  const etaEl = document.querySelector<HTMLElement>('[data-q-eta]');
+  const noteEl = document.querySelector<HTMLElement>('[data-q-note]');
+  const fillEl = document.querySelector<HTMLElement>('[data-q-fill]');
+
+  /* The queue moves, then admits more people, then moves again. It always
+     lets you through after about thirteen seconds — a booth queue that took
+     the advertised six minutes would just end the visit. */
+  const SCRIPT: Array<[number, number, string, string]> = [
+    [1200, 3960, 'ca 5 minuter', ''],
+    [2600, 3120, 'ca 4 minuter', ''],
+    [4000, 5480, 'ca 9 minuter', 'Fler personer har anslutit till kön.'],
+    [5600, 2180, 'ca 4 minuter', ''],
+    [7200, 2640, 'ca 5 minuter', 'Kön har omorganiserats. Din plats har uppdaterats.'],
+    [8800, 980, 'ca 2 minuter', ''],
+    [10200, 312, 'mindre än 1 minut', ''],
+    [11400, 47, 'nästan framme', ''],
+    [12300, 3, 'nästan framme', ''],
+  ];
+
+  const start = 4812;
+  let timers: Array<ReturnType<typeof setTimeout>> = [];
+
+  onStep('queue', () => {
+    for (const t of timers) clearTimeout(t);
+    timers = [];
+
+    if (posEl) posEl.textContent = start.toLocaleString('sv-SE').replace(/ /g, ' ');
+    if (etaEl) etaEl.textContent = 'ca 6 minuter';
+    if (noteEl) noteEl.textContent = '';
+    if (fillEl) fillEl.style.width = '4%';
+
+    for (const [delay, pos, eta, note] of SCRIPT) {
+      timers.push(
+        setTimeout(() => {
+          if (posEl) posEl.textContent = pos.toLocaleString('sv-SE').replace(/ /g, ' ');
+          if (etaEl) etaEl.textContent = eta;
+          if (noteEl) noteEl.textContent = note;
+          if (fillEl) fillEl.style.width = `${Math.max(4, 100 - (pos / start) * 100)}%`;
+        }, delay),
+      );
+    }
+
+    timers.push(setTimeout(() => goTo('booking'), 13400));
+  });
+
+  /* The upsell does not sell anything. It just costs you your place. */
+  document.querySelector('[data-q-plus]')?.addEventListener('click', () => {
+    if (noteEl) {
+      noteEl.textContent = 'Kan inte aktiveras i kön.';
+    }
+  });
+</script>

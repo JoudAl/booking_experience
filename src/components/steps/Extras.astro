@@ -1,0 +1,227 @@
+---
+import { extraCopy } from '../../data/booking';
+
+const order = ['ombokning', 'sms', 'hamta', 'plus'] as const;
+---
+
+<section data-step="extras" class="page ex" hidden>
+  <h1 class="ex__h">Tillägg</h1>
+
+  <div class="ex__grid">
+    <div class="ex__list">
+      {
+        order.map((id) => {
+          const c = extraCopy[id];
+          return (
+            <div class="row" data-ex-item={id}>
+              <span class="ex__body">
+                <b>{c.name}</b>
+                <span class="tiny muted">
+                  {c.note} · {c.price}
+                </span>
+              </span>
+              <button class="switch" data-ex-toggle={id} aria-pressed="true" aria-label={c.name} />
+            </div>
+          );
+        })
+      }
+
+      <div class="row">
+        <span class="ex__body">
+          <b>Förbokade omprov</b>
+          <span class="tiny muted">299 kr styck</span>
+        </span>
+        <span class="stepper">
+          <button data-ex-minus aria-label="Färre">−</button>
+          <span data-ex-omprov>1</span>
+          <button data-ex-plus aria-label="Fler">+</button>
+        </span>
+      </div>
+
+      <p class="note" data-ex-note hidden></p>
+    </div>
+
+    <aside class="ex__side">
+      <div class="card ex__sum">
+        <div class="ex__row"><span>Prov</span><b data-ex-prov>—</b></div>
+        <div class="ex__row"><span>Tillägg</span><b data-ex-extra>—</b></div>
+        <div class="ex__row ex__row--total"><span>Delsumma</span><b data-ex-total>—</b></div>
+        <button class="btn btn--go btn--block" data-ex-next>Fortsätt</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- Confirmshaming, one modal deep. -->
+<div class="overlay" id="ex-shame" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ex-shame-h">
+    <h2 id="ex-shame-h">Ta bort ombokningsskyddet?</h2>
+    <p class="small muted">Utan skydd förlorar du hela avgiften om du inte kan komma.</p>
+    <button class="btn btn--go btn--lg btn--block" data-ex-keep>Behåll skyddet</button>
+    <p class="ex__mid">
+      <button class="optout" data-ex-drop>Nej, jag chansar</button>
+    </p>
+  </div>
+</div>
+
+<style>
+  .ex {
+    padding-block: clamp(1rem, 3vw, 1.75rem);
+  }
+  .ex__h {
+    margin-bottom: 0.9rem;
+  }
+  .ex__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: clamp(1rem, 3vw, 1.5rem);
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .ex__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .ex__list {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .ex__body {
+    display: grid;
+    gap: 0.05rem;
+    min-width: 0;
+  }
+  .ex__side {
+    position: sticky;
+    top: 110px;
+  }
+  .ex__sum {
+    padding: 1rem;
+  }
+  .ex__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+  }
+  .ex__row span {
+    color: var(--text-muted);
+  }
+  .ex__row--total {
+    border-top: 1px solid var(--border);
+    margin-top: 0.3rem;
+    padding-top: 0.5rem;
+    font-size: 1rem;
+  }
+  .ex__row--total span {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .ex__sum .btn {
+    margin-top: 0.7rem;
+  }
+  .ex__mid {
+    text-align: center;
+    margin: 0.8rem 0 0;
+  }
+</style>
+
+<script>
+  import {
+    state,
+    goTo,
+    kr,
+    provTotal,
+    extrasTotal,
+    OMPROV_PRICE,
+    onStep,
+    onChange,
+    refresh,
+    openModal,
+    closeModal,
+  } from '../../scripts/flow';
+
+  const find = (id: string) => state.extras.find((e) => e.id === id)!;
+
+  const nag = (msg: string) => {
+    const el = document.querySelector<HTMLElement>('[data-ex-note]');
+    if (el) {
+      el.hidden = false;
+      el.textContent = msg;
+    }
+  };
+
+  const paint = () => {
+    for (const e of state.extras) {
+      const t = document.querySelector<HTMLElement>(`[data-ex-toggle="${e.id}"]`);
+      if (t) t.setAttribute('aria-pressed', String(e.on));
+    }
+    const count = document.querySelector<HTMLElement>('[data-ex-omprov]');
+    if (count) count.textContent = String(state.omprov);
+
+    const set = (sel: string, v: string) => {
+      const el = document.querySelector<HTMLElement>(sel);
+      if (el) el.textContent = v;
+    };
+    set('[data-ex-prov]', kr(provTotal()));
+    set('[data-ex-extra]', kr(extrasTotal()));
+    set('[data-ex-total]', kr(provTotal() + extrasTotal()));
+  };
+
+  onChange(paint);
+  onStep('extras', paint);
+
+  for (const btn of document.querySelectorAll<HTMLElement>('[data-ex-toggle]')) {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.exToggle!;
+      const e = find(id);
+
+      if (e.on && id === 'ombokning') {
+        openModal('ex-shame');
+        return;
+      }
+      /* Körklar Plus switches itself back on. */
+      if (e.on && id === 'plus') {
+        e.on = false;
+        paint();
+        setTimeout(() => {
+          e.on = true;
+          nag('Körklar Plus ingår i din bokning.');
+          paint();
+          refresh();
+        }, 1100);
+        return;
+      }
+      e.on = !e.on;
+      paint();
+      refresh();
+    });
+  }
+
+  document.querySelector('[data-ex-keep]')?.addEventListener('click', () => closeModal('ex-shame'));
+  document.querySelector('[data-ex-drop]')?.addEventListener('click', () => {
+    find('ombokning').on = false;
+    closeModal('ex-shame');
+    paint();
+    refresh();
+  });
+
+  /* The stepper counts down to one, never to zero. */
+  document.querySelector('[data-ex-minus]')?.addEventListener('click', () => {
+    if (state.omprov <= 1) {
+      nag(`Minst ett förbokat omprov krävs (${kr(OMPROV_PRICE)}).`);
+      return;
+    }
+    state.omprov -= 1;
+    paint();
+    refresh();
+  });
+  document.querySelector('[data-ex-plus]')?.addEventListener('click', () => {
+    state.omprov = Math.min(5, state.omprov + 1);
+    paint();
+    refresh();
+  });
+
+  document.querySelector('[data-ex-next]')?.addEventListener('click', () => goTo('kallelse'));
+</script>

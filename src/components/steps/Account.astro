@@ -1,0 +1,201 @@
+---
+import { site } from '../../data/booking';
+
+const profile = [
+  ['Namn', 'Alva Nyström'],
+  ['Personnr', '20100304-••••'],
+  ['Adress', 'Storgatan 4, Sollentuna'],
+  ['Telefon', '070-XXX XX 12'],
+];
+---
+
+<section data-step="account" class="page ac" hidden>
+  <!-- pane 1: the wall -->
+  <div data-ac-pane="wall">
+    <h1 class="ac__h">Identifiera dig</h1>
+    <div class="card ac__box">
+      <button class="btn btn--go btn--lg btn--block" data-ac-signin>
+        Logga in med {site.name}-ID
+      </button>
+      <div class="ac__mid">
+        <button class="optout" data-ac-guest>Fortsätt utan konto</button>
+        <p class="note" data-ac-guest-err hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- pane 2: details you never gave, and a rating you must give -->
+  <div data-ac-pane="profile" hidden>
+    <h1 class="ac__h">Dina uppgifter</h1>
+
+    <div class="card ac__box">
+      <dl class="ac__list">
+        {profile.map(([k, v]) => (<div><dt>{k}</dt><dd>{v}</dd></div>))}
+      </dl>
+      <button class="optout" data-ac-edit>Ändra</button>
+      <p class="note" data-ac-edit-err hidden></p>
+    </div>
+
+    <div class="card ac__box">
+      <p class="ac__q">Hur nöjd är du med {site.name}?</p>
+      <div class="stars" data-ac-stars>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button data-ac-star={n} aria-label={`${n} av 5`}>★</button>
+        ))}
+      </div>
+      <p class="note" data-ac-star-err hidden></p>
+    </div>
+
+    <div class="card ac__box">
+      <div class="ac__toggle">
+        <span class="ac__q">Dela mina uppgifter med {site.partners.toLocaleString('sv-SE')} partners</span>
+        <button class="switch" data-ac-share aria-pressed="true" aria-label="Dela mina uppgifter"
+        ></button>
+      </div>
+      <p class="note" data-ac-share-err hidden></p>
+    </div>
+
+    <button class="btn btn--go btn--lg btn--block" data-ac-next>Fortsätt</button>
+  </div>
+</section>
+
+<style>
+  .ac {
+    padding-block: clamp(1rem, 3vw, 1.75rem);
+    max-width: 560px;
+  }
+  .ac__h {
+    margin-bottom: 0.8rem;
+  }
+  .ac__box {
+    padding: 1rem;
+  }
+  .ac__box + .ac__box {
+    margin-top: 0.6rem;
+  }
+  .ac__box + .btn {
+    margin-top: 0.9rem;
+  }
+  .ac__mid {
+    text-align: center;
+    margin-top: 0.8rem;
+  }
+  .ac__list {
+    margin: 0 0 0.5rem;
+    display: grid;
+    gap: 0.2rem;
+  }
+  .ac__list div {
+    display: flex;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--surface-3);
+  }
+  .ac__list div:last-child {
+    border-bottom: 0;
+  }
+  .ac__list dt {
+    width: 6rem;
+    flex: none;
+    color: var(--text-faint);
+  }
+  .ac__list dd {
+    margin: 0;
+    font-weight: 600;
+  }
+  .ac__q {
+    font-size: 0.87rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+  .ac__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .ac__toggle .ac__q {
+    margin: 0;
+  }
+</style>
+
+<script>
+  import { goTo, onStep } from '../../scripts/flow';
+
+  const panes = document.querySelectorAll<HTMLElement>('[data-ac-pane]');
+  const show = (name: string) => {
+    for (const p of panes) p.hidden = p.dataset.acPane !== name;
+    window.scrollTo({ top: 0 });
+  };
+
+  const nag = (sel: string, msg: string) => {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (el) {
+      el.hidden = false;
+      el.textContent = msg;
+    }
+  };
+  const clearNag = (sel: string) => {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (el) el.hidden = true;
+  };
+
+  let rating = 0;
+
+  onStep('account', () => {
+    show('wall');
+    rating = 0;
+    paintStars();
+  });
+
+  document.querySelector('[data-ac-guest]')?.addEventListener('click', () =>
+    nag('[data-ac-guest-err]', 'Kräver konto.'),
+  );
+  document.querySelector('[data-ac-signin]')?.addEventListener('click', () => show('profile'));
+  document.querySelector('[data-ac-edit]')?.addEventListener('click', () =>
+    nag('[data-ac-edit-err]', 'Uppgifterna kan inte ändras här.'),
+  );
+
+  /* --- the rating you cannot give honestly -------------------------- */
+
+  const stars = [...document.querySelectorAll<HTMLElement>('[data-ac-star]')];
+  const paintStars = () => {
+    for (const s of stars) {
+      s.toggleAttribute('data-on', Number(s.dataset.acStar) <= rating);
+    }
+  };
+
+  for (const s of stars) {
+    s.addEventListener('click', () => {
+      rating = Number(s.dataset.acStar);
+      paintStars();
+      if (rating < 4) nag('[data-ac-star-err]', 'Välj minst 4 stjärnor för att fortsätta.');
+      else clearNag('[data-ac-star-err]');
+    });
+  }
+
+  /* --- the toggle that will not stay off ---------------------------- */
+
+  const share = document.querySelector<HTMLElement>('[data-ac-share]');
+  share?.addEventListener('click', () => {
+    const on = share.getAttribute('aria-pressed') === 'true';
+    if (on) {
+      share.setAttribute('aria-pressed', 'false');
+      setTimeout(() => {
+        share.setAttribute('aria-pressed', 'true');
+        nag('[data-ac-share-err]', 'Kunde inte sparas.');
+      }, 900);
+      return;
+    }
+    share.setAttribute('aria-pressed', 'true');
+  });
+
+  document.querySelector('[data-ac-next]')?.addEventListener('click', () => {
+    if (rating < 4) {
+      nag('[data-ac-star-err]', 'Välj minst 4 stjärnor för att fortsätta.');
+      return;
+    }
+    goTo('extras');
+  });
+</script>

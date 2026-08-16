@@ -1,0 +1,415 @@
+---
+const articles = [
+  'Ladda ner appen',
+  'Vad ingår i Körklar Plus?',
+  'Hitta till provplatsen',
+  'Byt namn på bokningen',
+  'Avboka min tid',
+  'Betalsätt',
+];
+---
+
+<section data-step="help" class="page hp" hidden>
+  <!-- pane: index -->
+  <div data-hp-pane="index">
+    <h1 class="hp__h">Hjälp</h1>
+    <ul class="hp__arts">
+      {
+        articles.map((a) => (
+          <li>
+            <button class="hp__art" data-hp-open={a === 'Avboka min tid' ? 'cancel' : 'other'}>
+              {a}
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+    <button class="optout hp__back" data-hp-back>Tillbaka</button>
+  </div>
+
+  <!-- pane: not the article you wanted -->
+  <div data-hp-pane="other" hidden>
+    <button class="optout" data-hp-home>← Hjälp</button>
+    <h1 class="hp__h">Ladda ner appen</h1>
+    <p class="small muted">Sök på ”Körklar” i din appbutik.</p>
+    <p class="small muted">Hjälpte detta?</p>
+    <div class="hp__vote">
+      <button class="btn btn--outline" data-hp-vote>Ja</button>
+      <button class="btn btn--outline" data-hp-vote>Nej</button>
+    </div>
+    <p class="small" data-hp-vote-msg hidden></p>
+  </div>
+
+  <!-- pane: the article you wanted -->
+  <div data-hp-pane="cancel" hidden>
+    <button class="optout" data-hp-home>← Hjälp</button>
+    <h1 class="hp__h">Avboka min tid</h1>
+    <p class="small muted">Avbokning sker via kundtjänst.</p>
+    <div class="hp__channels">
+      <button class="hp__channel" data-hp-go="chat">
+        <b>Chatt</b><span class="tiny muted">Svarar direkt</span>
+      </button>
+      <button class="hp__channel" data-hp-go="phone">
+        <b>Telefon</b><span class="tiny muted">Vardagar 10:00–10:30</span>
+      </button>
+      <button class="hp__channel" data-hp-go="form">
+        <b>Ansökan</b><span class="tiny muted">10–15 arbetsdagar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- pane: the bot -->
+  <div data-hp-pane="chat" hidden>
+    <button class="optout" data-hp-home>← Hjälp</button>
+    <h1 class="hp__h">Chatt</h1>
+    <div class="hp__chat">
+      <div class="hp__log" data-hp-log></div>
+      <div class="hp__quick" data-hp-quick></div>
+    </div>
+  </div>
+
+  <!-- pane: the phone line -->
+  <div data-hp-pane="phone" hidden>
+    <button class="optout" data-hp-home>← Hjälp</button>
+    <h1 class="hp__h">Telefon</h1>
+    <div class="card hp__phone">
+      <p class="hp__num mono">0900–17 17 17</p>
+      <p class="small muted">Vardagar 10:00–10:30 · 19 kr/min</p>
+      <p class="tiny faint">Kötid just nu: <b>54 minuter</b>.</p>
+    </div>
+  </div>
+
+  <!-- pane: the application that cannot be sent -->
+  <div data-hp-pane="form" hidden>
+    <button class="optout" data-hp-home>← Hjälp</button>
+    <h1 class="hp__h">Ansökan</h1>
+    <div class="card hp__form">
+      <dl class="hp__rows">
+        <div><dt>Bokningsnr</dt><dd class="mono" data-hp-ref>—</dd></div>
+      </dl>
+
+      <p class="hp__lbl">Anledning</p>
+      <div class="hp__chips">
+        {
+          ['Sjukdom', 'Ändrade planer', 'Fel tid', 'Annat'].map((r) => (
+            <button class="chip" data-hp-reason={r}>
+              {r}
+            </button>
+          ))
+        }
+      </div>
+
+      <p class="hp__lbl">Ordernyckel</p>
+      <button class="btn btn--outline btn--block" data-hp-key>Hämta nyckel</button>
+      <button class="btn btn--go btn--block hp__send" data-hp-send>Skicka</button>
+      <p class="note" data-hp-form-err hidden></p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hp {
+    padding-block: clamp(1.25rem, 4vw, 2rem);
+    max-width: 620px;
+  }
+  .hp__h {
+    font-size: 1.4rem;
+    margin-top: 0.4rem;
+  }
+  .hp__arts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .hp__art {
+    width: 100%;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.85rem;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+  .hp__art:hover {
+    border-color: var(--border-strong);
+  }
+  .hp__back {
+    margin-top: 1.1rem;
+  }
+  .hp__vote {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+  .hp__channels {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+  .hp__channel {
+    display: grid;
+    gap: 0.1rem;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.9rem;
+    cursor: pointer;
+  }
+  .hp__channel:hover {
+    border-color: var(--brand);
+  }
+
+  .hp__chat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.8rem;
+    margin-top: 0.6rem;
+  }
+  .hp__log {
+    height: 270px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .hp__log :global(.bub) {
+    max-width: 78%;
+    padding: 0.5rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  .hp__log :global(.bub--bot) {
+    align-self: flex-start;
+    background: var(--surface-3);
+    border-bottom-left-radius: 3px;
+  }
+  .hp__log :global(.bub--me) {
+    align-self: flex-end;
+    background: var(--brand);
+    color: #fff;
+    border-bottom-right-radius: 3px;
+  }
+  .hp__quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+  }
+  .hp__quick :global(button) {
+    background: var(--surface);
+    border: 1px solid var(--brand);
+    color: var(--brand);
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .hp__phone,
+  .hp__form {
+    padding: 1rem;
+    margin-top: 0.6rem;
+  }
+  .hp__num {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem;
+  }
+  .hp__rows {
+    margin: 0 0 0.9rem;
+  }
+  .hp__rows div {
+    display: flex;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+  }
+  .hp__rows dt {
+    width: 7rem;
+    flex: none;
+    color: var(--text-faint);
+  }
+  .hp__rows dd {
+    margin: 0;
+    font-weight: 600;
+  }
+  .hp__lbl {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0 0 0.4rem;
+  }
+  .hp__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+  }
+  .hp__send {
+    margin-top: 0.5rem;
+  }
+</style>
+
+<script>
+  import { state, goTo, onStep } from '../../scripts/flow';
+
+  const panes = document.querySelectorAll<HTMLElement>('[data-hp-pane]');
+  const show = (name: string) => {
+    for (const p of panes) p.hidden = p.dataset.hpPane !== name;
+    window.scrollTo({ top: 0 });
+  };
+
+  onStep('help', () => {
+    show('index');
+    const ref = document.querySelector<HTMLElement>('[data-hp-ref]');
+    if (ref) ref.textContent = state.bookingRef;
+  });
+
+  for (const b of document.querySelectorAll<HTMLElement>('[data-hp-open]')) {
+    b.addEventListener('click', () => show(b.dataset.hpOpen!));
+  }
+  for (const b of document.querySelectorAll<HTMLElement>('[data-hp-go]')) {
+    b.addEventListener('click', () => show(b.dataset.hpGo!));
+  }
+  for (const b of document.querySelectorAll('[data-hp-home]')) {
+    b.addEventListener('click', () => show('index'));
+  }
+  document.querySelector('[data-hp-back]')?.addEventListener('click', () => goTo('done'));
+
+  const voteMsg = document.querySelector<HTMLElement>('[data-hp-vote-msg]');
+  for (const b of document.querySelectorAll('[data-hp-vote]')) {
+    b.addEventListener('click', () => {
+      if (voteMsg) {
+        voteMsg.hidden = false;
+        voteMsg.textContent = 'Tack!';
+      }
+    });
+  }
+
+  /* --- Bosse ------------------------------------------------------- */
+
+  const log = document.querySelector<HTMLElement>('[data-hp-log]');
+  const quick = document.querySelector<HTMLElement>('[data-hp-quick]');
+
+  const say = (text: string, who: 'bot' | 'me' = 'bot') => {
+    if (!log) return;
+    const el = document.createElement('div');
+    el.className = `bub bub--${who}`;
+    el.textContent = text;
+    log.append(el);
+    log.scrollTop = log.scrollHeight;
+  };
+
+  const offer = (options: Array<[string, () => void]>) => {
+    if (!quick) return;
+    quick.innerHTML = '';
+    for (const [label, fn] of options) {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        say(label, 'me');
+        quick.innerHTML = '';
+        setTimeout(fn, 700);
+      });
+      quick.append(b);
+    }
+  };
+
+  const MENU: Array<[string, () => void]> = [
+    [
+      'Var ligger provplatsen?',
+      () => {
+        say('Hagalund, Sollentuna. Vägbeskrivning finns i appen!');
+        setTimeout(back, 800);
+      },
+    ],
+    [
+      'Vad kostar omprov?',
+      () => {
+        say('299 kr per omprov. Vill du förboka fler?');
+        setTimeout(back, 800);
+      },
+    ],
+    [
+      'Jag vill avboka',
+      () => {
+        say('Avbokning kan jag tyvärr inte hjälpa till med i chatten.');
+        setTimeout(() => {
+          say('Vill du bli kopplad till en handläggare?');
+          offer([
+            [
+              'Ja tack',
+              () => {
+                say('Kopplar …');
+                setTimeout(() => {
+                  say('Alla handläggare är upptagna. Väntetid: 54 minuter.');
+                  setTimeout(() => {
+                    say('Chatten avslutades på grund av inaktivitet.');
+                    offer([['Ny chatt', boot]]);
+                  }, 2200);
+                }, 1800);
+              },
+            ],
+            [
+              'Nej',
+              () => {
+                say('Okej! Något annat?');
+                setTimeout(back, 600);
+              },
+            ],
+          ]);
+        }, 900);
+      },
+    ],
+  ];
+
+  const back = () => offer(MENU);
+
+  const boot = () => {
+    if (log) log.innerHTML = '';
+    say('Hej! Jag är Bosse. 👋');
+    setTimeout(() => {
+      say('Vad kan jag hjälpa dig med?');
+      back();
+    }, 800);
+  };
+
+  let booted = false;
+  document.querySelector('[data-hp-go="chat"]')?.addEventListener('click', () => {
+    if (booted) return;
+    booted = true;
+    boot();
+  });
+
+  /* --- the application that cannot be submitted --------------------- */
+
+  const formErr = document.querySelector<HTMLElement>('[data-hp-form-err]');
+  const fail = (msg: string) => {
+    if (formErr) {
+      formErr.hidden = false;
+      formErr.textContent = msg;
+    }
+  };
+
+  for (const chip of document.querySelectorAll<HTMLElement>('[data-hp-reason]')) {
+    chip.addEventListener('click', () => {
+      for (const c of document.querySelectorAll<HTMLElement>('[data-hp-reason]')) {
+        c.setAttribute('aria-pressed', String(c === chip));
+      }
+    });
+  }
+
+  /* The key is in the confirmation. The confirmation takes 72 hours.
+     The application closes after 24. */
+  document.querySelector('[data-hp-key]')?.addEventListener('click', () =>
+    fail('Nyckeln finns i bekräftelsen, som skickas inom 72 timmar.'),
+  );
+  document.querySelector('[data-hp-send]')?.addEventListener('click', () =>
+    fail('Kräver ordernyckel. Ansökan måste inkomma inom 24 timmar.'),
+  );
+</script>

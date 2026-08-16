@@ -1,0 +1,418 @@
+---
+import { weekdays, months } from '../../data/booking';
+
+const year = 2026;
+const month = 8; // September
+const first = new Date(Date.UTC(year, month, 1));
+const offset = (first.getUTCDay() + 6) % 7; // Monday-first grid
+const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+const cells = [...Array(offset).fill(0), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+
+const centres = [
+  'Hagalund',
+  'Järva',
+  'Norrtälje',
+  'Södertälje',
+  'Uppsala',
+  'Västerås',
+];
+---
+
+<section data-step="booking" class="page bk" hidden>
+  <h1 class="bk__h">Välj tid</h1>
+
+  <div class="bk__grid">
+    <div class="bk__main">
+      <div class="card bk__filters">
+        <label class="bk__f">
+          <span class="bk__lbl">Provplats</span>
+          <select class="select" data-bk-centre>
+            {centres.map((c) => <option value={c} selected={c === 'Hagalund'}>{c}</option>)}
+          </select>
+        </label>
+
+        <div class="bk__f">
+          <span class="bk__lbl">Restid <b data-bk-km>60</b> km</span>
+          <input class="range" type="range" min="0" max="2" step="1" value="1" data-bk-range />
+        </div>
+
+        <p class="note" data-bk-filter-note hidden></p>
+      </div>
+
+      <div class="card bk__cal">
+        <div class="bk__month">{months[month]} {year}</div>
+        <div class="bk__wd" aria-hidden="true">
+          {weekdays.map((w) => <span>{w}</span>)}
+        </div>
+        <div class="bk__days" data-bk-days>
+          {
+            cells.map((d) =>
+              d === 0 ? (
+                <span class="bk__pad" />
+              ) : (
+                <button class="bk__day" data-bk-day={d}>
+                  {d}
+                </button>
+              ),
+            )
+          }
+        </div>
+        <p class="note" data-bk-day-note hidden></p>
+      </div>
+
+      <div class="card bk__times">
+        <div class="seg bk__seg" role="group">
+          <button data-bk-part="fm" aria-pressed="true">Förmiddag</button>
+          <button data-bk-part="em" aria-pressed="false">Eftermiddag</button>
+          <button data-bk-part="kv" aria-pressed="false">Kväll</button>
+        </div>
+        <div class="bk__chips" data-bk-slots></div>
+        <p class="note" data-bk-slot-note hidden></p>
+      </div>
+    </div>
+
+    <aside class="bk__side">
+      <div class="card bk__sum">
+        <div class="bk__row"><span data-bk-sum-typ>Körprov</span><b data-bk-sum-price>800 kr</b></div>
+        <div class="bk__row"><span>Tid</span><b data-bk-sum-when>—</b></div>
+        <div class="bk__row"><span>Tillägg kvällstid</span><b data-bk-sum-prem>0 kr</b></div>
+        <div class="bk__row bk__row--total"><span>Delsumma</span><b data-bk-sum-total>800 kr</b></div>
+        <button class="btn btn--go btn--block" data-bk-next disabled>Fortsätt</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .bk {
+    padding-block: clamp(1rem, 3vw, 1.75rem);
+  }
+  .bk__h {
+    margin-bottom: 1rem;
+  }
+  .bk__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: clamp(1rem, 3vw, 1.5rem);
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .bk__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .bk__main {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .bk__filters,
+  .bk__cal,
+  .bk__times {
+    padding: 0.9rem 1rem;
+  }
+  .bk__filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1rem;
+  }
+  @media (max-width: 520px) {
+    .bk__filters {
+      grid-template-columns: 1fr;
+    }
+  }
+  .bk__filters .note,
+  .bk__f {
+    grid-column: 1 / -1;
+  }
+  .bk__f:first-child,
+  .bk__f:nth-child(2) {
+    grid-column: auto;
+  }
+  .bk__lbl {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.2rem;
+  }
+
+  .bk__month {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  .bk__wd,
+  .bk__days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    /* Cells stay ≥44px for touch without the grid eating the page. */
+    max-width: 430px;
+  }
+  .bk__wd span {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-faint);
+    padding-bottom: 0.2rem;
+  }
+  .bk__day {
+    aspect-ratio: 1;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+  }
+  .bk__day[disabled] {
+    background: var(--surface-2);
+    color: var(--text-faint);
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .bk__day[data-free] {
+    border-color: var(--go);
+    color: var(--go-dark);
+    font-weight: 700;
+  }
+  .bk__day[aria-pressed='true'] {
+    background: var(--brand);
+    border-color: var(--brand-dark);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .bk__seg {
+    margin-bottom: 0.75rem;
+  }
+  .bk__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-height: 2.6rem;
+  }
+  .bk__chips :global(.chip) {
+    display: grid;
+    justify-items: center;
+    line-height: 1.2;
+  }
+  .bk__chips :global(.chip em) {
+    font-style: normal;
+    font-size: 0.66rem;
+    opacity: 0.75;
+  }
+  .bk__chips :global(.bk__empty) {
+    font-size: 0.82rem;
+    color: var(--text-faint);
+    align-self: center;
+  }
+
+  .bk__side {
+    position: sticky;
+    top: 110px;
+  }
+  .bk__sum {
+    padding: 1rem;
+  }
+  .bk__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+  }
+  .bk__row span {
+    color: var(--text-muted);
+  }
+  .bk__row--total {
+    border-top: 1px solid var(--border);
+    margin-top: 0.3rem;
+    padding-top: 0.5rem;
+    font-size: 1rem;
+  }
+  .bk__row--total span {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .bk__sum .btn {
+    margin-top: 0.7rem;
+  }
+</style>
+
+<script>
+  import { state, goTo, kr, onStep, refresh } from '../../scripts/flow';
+  import { provById, months } from '../../data/booking';
+
+  const KM = [30, 60, 120];
+  /* Moving the distance slider does not widen the search — it reshuffles
+     what is free, and takes your chosen day with it. */
+  const AVAIL = [
+    [3, 8, 15, 22],
+    [3, 9, 15, 17, 24],
+    [8, 9, 16, 22, 24, 29],
+  ];
+
+  const SLOTS: Record<string, Array<{ t: string; prem: number; bait?: boolean }>> = {
+    fm: [
+      { t: '08:00', prem: 0, bait: true },
+      { t: '09:20', prem: 0, bait: true },
+    ],
+    em: [
+      { t: '13:00', prem: 0 },
+      { t: '14:20', prem: 0 },
+      { t: '15:40', prem: 0 },
+    ],
+    kv: [
+      { t: '17:00', prem: 150 },
+      { t: '18:20', prem: 150 },
+    ],
+  };
+
+  const days = [...document.querySelectorAll<HTMLButtonElement>('[data-bk-day]')];
+  const slotBox = document.querySelector<HTMLElement>('[data-bk-slots]');
+  const next = document.querySelector<HTMLButtonElement>('[data-bk-next]');
+  const spent = new Set<string>();
+
+  let range = 1;
+  let part = 'fm';
+
+  const nag = (sel: string, msg: string) => {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (el) {
+      el.hidden = false;
+      el.textContent = msg;
+    }
+  };
+  const clearNag = (sel: string) => {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (el) el.hidden = true;
+  };
+
+  const paintSummary = () => {
+    const set = (sel: string, v: string) => {
+      const el = document.querySelector<HTMLElement>(sel);
+      if (el) el.textContent = v;
+    };
+    set('[data-bk-sum-typ]', provById(state.provtyp)?.name ?? '');
+    set('[data-bk-sum-price]', kr(state.provPrice));
+    set('[data-bk-sum-when]', state.date && state.time ? `${state.date} ${state.time}` : '—');
+    set('[data-bk-sum-prem]', kr(state.slotPremium));
+    set('[data-bk-sum-total]', kr(state.provPrice + state.slotPremium));
+    if (next) next.disabled = !(state.date && state.time);
+  };
+
+  const paintDays = () => {
+    const free = AVAIL[range];
+    for (const d of days) {
+      const n = Number(d.dataset.bkDay);
+      const isFree = free.includes(n) && !spent.has(`d${n}`);
+      d.disabled = !isFree;
+      d.toggleAttribute('data-free', isFree);
+      d.setAttribute('aria-pressed', String(state.date === `${n} ${months[8]}`));
+    }
+  };
+
+  const paintSlots = () => {
+    if (!slotBox) return;
+    slotBox.innerHTML = '';
+    if (!state.date) {
+      slotBox.innerHTML = '<span class="bk__empty">Välj en dag</span>';
+      return;
+    }
+    const list = SLOTS[part].filter((s) => !spent.has(`${part}${s.t}`));
+    if (!list.length) {
+      slotBox.innerHTML = '<span class="bk__empty">Inga tider</span>';
+      return;
+    }
+    for (const s of list) {
+      const b = document.createElement('button');
+      b.className = 'chip';
+      b.dataset.t = s.t;
+      b.dataset.prem = String(s.prem);
+      if (s.bait) b.dataset.bait = 'yes';
+      b.setAttribute('aria-pressed', String(state.time === s.t));
+      b.innerHTML = s.prem ? `${s.t}<em>+${s.prem} kr</em>` : s.t;
+      b.addEventListener('click', () => pickSlot(s));
+      slotBox.append(b);
+    }
+  };
+
+  /* The cheap morning slots are bait: they go the moment you reach. */
+  const pickSlot = (s: { t: string; prem: number; bait?: boolean }) => {
+    if (s.bait && !spent.has(`${part}${s.t}`)) {
+      spent.add(`${part}${s.t}`);
+      nag('[data-bk-slot-note]', 'Tiden bokades av någon annan.');
+      paintSlots();
+      return;
+    }
+    clearNag('[data-bk-slot-note]');
+    state.time = s.t;
+    state.slotPremium = s.prem;
+    paintSlots();
+    paintSummary();
+    refresh();
+  };
+
+  for (const d of days) {
+    d.addEventListener('click', () => {
+      const n = Number(d.dataset.bkDay);
+      /* One free day per visit turns out to have just gone. */
+      if (!spent.has('firstday')) {
+        spent.add('firstday');
+        spent.add(`d${n}`);
+        nag('[data-bk-day-note]', 'Dagen är inte längre tillgänglig.');
+        paintDays();
+        return;
+      }
+      clearNag('[data-bk-day-note]');
+      state.date = `${n} ${months[8]}`;
+      state.time = '';
+      state.slotPremium = 0;
+      paintDays();
+      paintSlots();
+      paintSummary();
+    });
+  }
+
+  for (const b of document.querySelectorAll<HTMLElement>('[data-bk-part]')) {
+    b.addEventListener('click', () => {
+      part = b.dataset.bkPart!;
+      for (const o of document.querySelectorAll<HTMLElement>('[data-bk-part]')) {
+        o.setAttribute('aria-pressed', String(o === b));
+      }
+      clearNag('[data-bk-slot-note]');
+      paintSlots();
+    });
+  }
+
+  document.querySelector<HTMLInputElement>('[data-bk-range]')?.addEventListener('input', (e) => {
+    range = Number((e.target as HTMLInputElement).value);
+    const km = document.querySelector<HTMLElement>('[data-bk-km]');
+    if (km) km.textContent = String(KM[range]);
+    state.date = '';
+    state.time = '';
+    state.slotPremium = 0;
+    nag('[data-bk-filter-note]', 'Sökningen är uppdaterad. Ditt val av tid har rensats.');
+    paintDays();
+    paintSlots();
+    paintSummary();
+  });
+
+  /* Every other test centre is full. The dropdown snaps back. */
+  document.querySelector<HTMLSelectElement>('[data-bk-centre]')?.addEventListener('change', (e) => {
+    const sel = e.target as HTMLSelectElement;
+    if (sel.value !== 'Hagalund') {
+      sel.value = 'Hagalund';
+      nag('[data-bk-filter-note]', 'Provplatsen är fullbokad. Hagalund har valts.');
+    }
+  });
+
+  onStep('booking', () => {
+    paintDays();
+    paintSlots();
+    paintSummary();
+  });
+
+  document.querySelector('[data-bk-next]')?.addEventListener('click', () => goTo('account'));
+</script>

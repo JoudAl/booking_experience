@@ -1,0 +1,149 @@
+---
+import { kallelseOptions } from '../../data/booking';
+---
+
+<section data-step="kallelse" class="page ka" hidden>
+  <h1 class="ka__h">Kallelse</h1>
+
+  <div class="ka__grid">
+    <div class="ka__list">
+      {
+        kallelseOptions.map((k) => (
+          <label class="radio" data-ka-opt={k.id}>
+            <input
+              type="radio"
+              name="kallelse"
+              value={k.id}
+              data-ka-fee={k.fee}
+              data-ka-blocked={k.blocked ? 'yes' : undefined}
+              checked={k.id === 'post'}
+            />
+            <span class="ka__main">{k.name}</span>
+            <span class="ka__fee">{k.fee === 0 ? '0 kr' : `+${k.fee} kr`}</span>
+          </label>
+        ))
+      }
+      <p class="note" data-ka-note hidden></p>
+    </div>
+
+    <aside class="ka__side">
+      <div class="card ka__sum">
+        <div class="ka__row"><span>Prov</span><b data-ka-prov>—</b></div>
+        <div class="ka__row"><span>Tillägg</span><b data-ka-extra>—</b></div>
+        <div class="ka__row"><span>Kallelse</span><b data-ka-fee-out>—</b></div>
+        <div class="ka__row ka__row--total"><span>Delsumma</span><b data-ka-total>—</b></div>
+        <button class="btn btn--go btn--block" data-ka-next>Fortsätt</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .ka {
+    padding-block: clamp(1rem, 3vw, 1.75rem);
+  }
+  .ka__h {
+    margin-bottom: 0.9rem;
+  }
+  .ka__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: clamp(1rem, 3vw, 1.5rem);
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .ka__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .ka__list {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .ka__main {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .ka__fee {
+    flex: none;
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+  .ka__side {
+    position: sticky;
+    top: 110px;
+  }
+  .ka__sum {
+    padding: 1rem;
+  }
+  .ka__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+  }
+  .ka__row span {
+    color: var(--text-muted);
+  }
+  .ka__row--total {
+    border-top: 1px solid var(--border);
+    margin-top: 0.3rem;
+    padding-top: 0.5rem;
+    font-size: 1rem;
+  }
+  .ka__row--total span {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .ka__sum .btn {
+    margin-top: 0.7rem;
+  }
+</style>
+
+<script>
+  import { state, goTo, kr, provTotal, extrasTotal, onChange, refresh } from '../../scripts/flow';
+
+  const note = document.querySelector<HTMLElement>('[data-ka-note]');
+  const radios = [...document.querySelectorAll<HTMLInputElement>('input[name="kallelse"]')];
+
+  const paint = () => {
+    const set = (sel: string, v: string) => {
+      const el = document.querySelector<HTMLElement>(sel);
+      if (el) el.textContent = v;
+    };
+    set('[data-ka-prov]', kr(provTotal()));
+    set('[data-ka-extra]', kr(extrasTotal()));
+    set('[data-ka-fee-out]', kr(state.kallelseFee));
+    set('[data-ka-total]', kr(provTotal() + extrasTotal() + state.kallelseFee));
+  };
+  onChange(paint);
+
+  for (const radio of radios) {
+    radio.addEventListener('change', () => {
+      /* The free option is not an option. */
+      if (radio.dataset.kaBlocked === 'yes') {
+        const post = radios.find((r) => r.value === 'post');
+        if (post) post.checked = true;
+        state.kallelse = 'post';
+        state.kallelseFee = 89;
+        if (note) {
+          note.hidden = false;
+          note.textContent = 'Kräver Körklar Plus. Post har valts.';
+        }
+        paint();
+        refresh();
+        return;
+      }
+      state.kallelse = radio.value;
+      state.kallelseFee = Number(radio.dataset.kaFee);
+      if (note) note.hidden = true;
+      paint();
+      refresh();
+    });
+  }
+
+  document.querySelector('[data-ka-next]')?.addEventListener('click', () => goTo('payment'));
+</script>

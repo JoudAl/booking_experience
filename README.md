@@ -1,39 +1,65 @@
-# Booking Experience Lab
+# Körklar — provbokning med allt som kan gå fel
 
-A client-side tutorial site about **appointment booking** UX. Each lab is a working booking
-interface you can actually use — take the slot, decline the extras, try to cancel. Then you judge
-it, **good or bad**, and the reveal tells you which pattern you walked into, why it works on people,
-and how it should have been built.
+A single, seamless, deliberately hostile **appointment booking** flow in Swedish, built for a
+booth exhibit. Pupils sit down, book a driving test that does not exist, and write what annoyed
+them on sticky notes. There is no task instruction, no tutorial framing, no reveal, no
+explanation, and nothing on the page that hints the experience is the point. It reads as an
+ordinary — if irritating — booking site.
 
-Seven labs demonstrate a dark pattern; three show the same job done honestly, mixed in without
-warning so the judgement is a real one. The setting throughout is a physiotherapy clinic, but the
-patterns are the ones every appointment system runs into: clinics, salons, garages, government
-services, consultations.
+Two constraints shape everything:
 
-- **Static and client-side only.** No backend, no analytics, no network calls. Progress lives in
-  `localStorage`.
-- **Built with [Astro](https://astro.build)** — zero framework runtime, one small hoisted script per
-  page.
-- **Theme-aware**, responsive, keyboard-operable.
+- **Nothing can be typed into.** There is not a single text field in the DOM. Every interaction
+  is a click, a tap or a drag, so the booth needs a mouse or a touchscreen and no keyboard.
+- **Almost nothing to read.** Labels, numbers and controls carry the meaning. The friction is in
+  what the widgets *do*, not in paragraphs describing it.
 
-## Labs
+Everything is fictional: **Körklar** the booking service, **Hagalund** the test centre, and
+every name, price and queue position. Nothing is submitted anywhere, no booking is made, no
+payment is taken, and no request leaves the browser.
 
-| # | Lab | Pattern | Verdict |
-|---|-----|---------|---------|
-| 01 | The Last Appointment on Earth | False urgency & phantom scarcity | Bad |
-| 02 | Forty-Nine Dollars* | Drip pricing / hidden fees | Bad |
-| 03 | Everything You Never Asked For | Preselected opt-ins & confirmshaming | Bad |
-| 04 | Pick a Time. Any Time. | Hostile input design | Bad |
-| 05 | A Slot Picker That Answers Questions | Progressive disclosure done right | Good |
-| 06 | Papers, Please | Forced registration & data maximalism | Bad |
-| 07 | Three Fields and a Confirmation | Minimal-friction booking | Good |
-| 08 | Easy to Book | Roach motel | Bad |
-| 09 | Do Not Not Contact Me | Trick wording & interface interference | Bad |
-| 10 | The Number You Will Actually Pay | Honest price presentation | Good |
+## The controls, and how each one betrays you
 
-## Local development
+The flow is a tour of ordinary UI widgets, every one of them sabotaged in a way that is normal
+somewhere on the real web.
 
-Uses **pnpm** (npm 12's dependency resolver chokes on this graph).
+| Control | Where | What it does |
+|---|---|---|
+| Checkbox list | Kakor | Switching one off switches it back on a moment later |
+| Segmented control | Start | Fine — it is the honest one, so the rest read as deliberate |
+| Dropdown | Välj tid | Every other test centre is "fullbokat"; the selection snaps back |
+| Range slider | Välj tid | Widening the search reshuffles availability and silently discards your chosen slot |
+| Calendar grid | Välj tid | Most days greyed out; the first free day you touch has "just gone" |
+| Time chips | Välj tid | The cheap morning slots evaporate on click; evening carries +150 kr |
+| Star rating | Identifiera dig | Under four stars is refused |
+| Toggle switch | Identifiera dig | Data-sharing will not stay off |
+| Toggle switches | Tillägg | Four add-ons pre-enabled; Körklar Plus re-enables itself; one is confirmshamed |
+| +/− stepper | Tillägg | Pre-booked retakes start at 1 and will not go to 0 |
+| Radio cards | Kallelse | The free option needs a subscription and bounces you to the 89 kr one |
+| Accordion | Betala | The fee breakdown is collapsed by default and fills in while you look away |
+| Drag to confirm | Betala | The first completed drag "avbröts" and slides back |
+| Modal | throughout | Confirmshaming, and a reservation that expires and re-prices |
+
+Plus the ambient furniture: a ten-minute reservation countdown that silently restarts at 00:00,
+an invented "1 247 bokar just nu" counter, booking toasts from invented people in invented
+towns, and a progress indicator that disagrees with itself ("Steg 1 av 3" → "Steg 4 av 6" →
+"Steg 7 av 9") and with its own fill bar.
+
+## The flow
+
+One page, nine steps, no route changes.
+
+`Kakor → Start → Kö → Välj tid → Identifiera dig → Tillägg → Kallelse → Betala → Bekräftelse →
+Hjälp`
+
+A run takes about three minutes. **Every step is beatable** — the frustration has to be
+survivable, or pupils give up before they have anything to write down. The headline price is
+325 kr; the drag-to-pay button typically says something over 2 000 kr.
+
+The last step is a dead end by design: the chatbot cannot cancel, the phone line is open
+10:00–10:30, and the cancellation form needs an order key that only arrives after the deadline
+for using it.
+
+## Running the booth
 
 ```bash
 pnpm install
@@ -43,31 +69,35 @@ pnpm preview  # serve the built site
 pnpm check    # type-check .astro and .ts
 ```
 
+Put the browser in full screen. Nothing is persisted, so **reloading is a full reset.**
+
+Two ways to get a clean start for the next pupil:
+
+- **Tap the Körklar logo five times** quickly.
+- **Wait.** Three minutes with no click, tap or keypress reloads the page by itself.
+
+## Structure
+
+- [`src/pages/index.astro`](src/pages/index.astro) — the whole site; imports the chrome and the
+  nine step components.
+- [`src/scripts/flow.ts`](src/scripts/flow.ts) — shared state, price maths, and `goTo()`, which
+  is the entire router. Nothing touches `localStorage`.
+- [`src/data/booking.ts`](src/data/booking.ts) — test types, add-ons, kallelse options.
+- [`src/styles/global.css`](src/styles/global.css) — design tokens plus the shared control
+  widgets (`.seg`, `.chip`, `.switch`, `.stepper`, `.range`, `.stars`, `.acc`, `.radio`).
+- [`src/components/Chrome.astro`](src/components/Chrome.astro) — header, countdown, progress
+  bar, toasts, and the booth reset.
+- [`src/components/steps/`](src/components/steps/) — one component per screen, each owning its
+  own markup, scoped styles and script.
+
+Three things to know before editing: sections are shown and hidden with the `hidden` attribute,
+so a component that sets its own `display` needs the global `[hidden]` rule in
+[`global.css`](src/styles/global.css) to win; elements created in JavaScript do not get Astro's
+scope attribute, so their styles need `:global()`; and any `<button>` inside a `<form>` needs an
+explicit `type="button"` or it submits.
+
 ## Deployment
 
-Pushing to `main` (or `master`) builds and publishes to GitHub Pages via
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
-
-**One-time setup:** in the repository, go to **Settings → Pages → Build and deployment** and set
-**Source** to **GitHub Actions**. That's it — no `gh-pages` branch and no secrets required.
-
-The workflow reads the site URL and base path from `actions/configure-pages`, so it works unchanged
-whether the repo publishes to `https://<user>.github.io/<repo>/` or to a user/organisation site at
-the domain root. Locally the base path defaults to `/`.
-
-## Adding a lab
-
-1. Create the demo component in `src/components/labs/YourLab.astro`. It renders inside the fake
-   browser chrome and owns its own markup, scoped styles, and script.
-2. Add an entry to the `labs` array in [`src/data/labs.ts`](src/data/labs.ts), setting `component`
-   to the file name without the extension.
-
-The route, the home-page card, the navigation, the progress tracking, and the cheat-sheet entry are
-all generated from that array.
-
-## Notes on the demos
-
-Every screen is a simulation. Nothing is submitted anywhere, no appointment is made, no payment is
-taken, and the clinics are invented. The manipulative behaviours — the resetting countdown, the
-fabricated viewer counts, the re-checking add-on — are implemented faithfully because the point is
-to experience them, but they are confined to the page you are on.
+Pushing to `main` builds and publishes to GitHub Pages via
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). One-time setup: **Settings →
+Pages → Build and deployment → Source: GitHub Actions**.
